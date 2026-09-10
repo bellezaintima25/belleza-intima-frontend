@@ -32,7 +32,7 @@ export default function HomePage() {
       <section className="bg-gradient-to-b from-primary-50 to-white">
         <div className="max-w-6xl mx-auto px-4 py-16 sm:py-24 flex flex-col items-center text-center">
           <Image src="/logo.svg" alt="Belleza Íntima" width={120} height={120} priority className="mb-6" />
-          <h1 className="font-serif text-4xl sm:text-5xl font-semibold text-gray-800 leading-tight max-w-2xl">
+          <h1 className="font-serif text-4xl sm:text-5xl font-semibold text-primary-700 leading-tight max-w-2xl">
             Lencería que realza tu belleza
           </h1>
           <p className="mt-4 text-gray-500 max-w-lg">
@@ -58,7 +58,7 @@ export default function HomePage() {
 
       {/* Categories */}
       <section className="max-w-6xl mx-auto px-4 py-14">
-        <h2 className="font-serif text-2xl font-semibold text-gray-800 text-center mb-8">
+        <h2 className="font-serif text-2xl font-semibold text-primary-700 text-center mb-8">
           Explora por categoría
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -80,7 +80,7 @@ export default function HomePage() {
       {/* Featured products */}
       <section className="max-w-6xl mx-auto px-4 pb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="font-serif text-2xl font-semibold text-gray-800">Destacados</h2>
+          <h2 className="font-serif text-2xl font-semibold text-primary-700">Destacados</h2>
           <Link href="/catalogo" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
             Ver todo →
           </Link>
@@ -109,7 +109,7 @@ export default function HomePage() {
       {/* Brand teaser */}
       <section className="bg-primary-50">
         <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-          <h2 className="font-serif text-3xl font-semibold text-gray-800 mb-3">Hecho con amor</h2>
+          <h2 className="font-serif text-3xl font-semibold text-primary-700 mb-3">Hecho con amor</h2>
           <p className="text-gray-600 leading-relaxed max-w-2xl mx-auto">
             En Belleza Íntima creemos que cada mujer merece sentirse hermosa y segura.
             Seleccionamos cada prenda con cuidado, pensando en la calidad, el detalle y

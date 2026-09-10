@@ -40,7 +40,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0" aria-label="Belleza Íntima — Inicio">
           <Image src="/logo.svg" alt="Belleza Íntima" width={72} height={72} priority />
-          <span className="font-serif text-lg font-semibold text-primary-700 tracking-tight hidden xl:block">
+          <span className="font-serif text-lg font-semibold text-primary-600 tracking-tight hidden xl:block">
             Belleza Íntima
           </span>
         </Link>

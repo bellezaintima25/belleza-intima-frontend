@@ -218,7 +218,7 @@ export default function ProductDetailPage() {
           <span className="text-sm font-semibold text-primary-500 uppercase tracking-wider">
             {categoryLabel(product.category)}
           </span>
-          <h1 className="mt-1 font-serif text-3xl font-semibold text-gray-800">{product.name}</h1>
+          <h1 className="mt-1 font-serif text-3xl font-semibold text-primary-700">{product.name}</h1>
           <p className="mt-1 text-2xl font-bold text-primary-600">{formatPrice(price)}</p>
 
           {product.description && (

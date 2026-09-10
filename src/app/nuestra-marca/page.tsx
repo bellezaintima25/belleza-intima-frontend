@@ -13,7 +13,7 @@ export default function NuestraMarcaPage() {
       <section className="bg-gradient-to-b from-primary-50 to-white">
         <div className="max-w-3xl mx-auto px-4 py-16 text-center flex flex-col items-center">
           <Image src="/logo.svg" alt="Belleza Íntima" width={100} height={100} className="mb-6" />
-          <h1 className="font-serif text-4xl font-semibold text-gray-800">Nuestra marca</h1>
+          <h1 className="font-serif text-4xl font-semibold text-primary-700">Nuestra marca</h1>
           <p className="mt-4 text-gray-500 max-w-xl">
             Más que lencería: una experiencia pensada para que te sientas hermosa,
             cómoda y segura de ti misma.
@@ -24,7 +24,7 @@ export default function NuestraMarcaPage() {
       {/* Content */}
       <section className="max-w-3xl mx-auto px-4 py-14 space-y-12">
         <div>
-          <h2 className="font-serif text-2xl font-semibold text-gray-800 mb-3">Quiénes somos</h2>
+          <h2 className="font-serif text-2xl font-semibold text-primary-700 mb-3">Quiénes somos</h2>
           <p className="text-gray-600 leading-relaxed">
             Belleza Íntima nació con un propósito claro: ofrecer lencería de calidad
             que combine elegancia, comodidad y estilo. Cada prenda es seleccionada
@@ -33,7 +33,7 @@ export default function NuestraMarcaPage() {
         </div>
 
         <div>
-          <h2 className="font-serif text-2xl font-semibold text-gray-800 mb-3">Nuestra promesa</h2>
+          <h2 className="font-serif text-2xl font-semibold text-primary-700 mb-3">Nuestra promesa</h2>
           <p className="text-gray-600 leading-relaxed">
             Nos comprometemos a brindarte productos que te hagan sentir especial, con
             una atención cercana y personalizada. Queremos que cada compra sea una

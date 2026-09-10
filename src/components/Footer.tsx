@@ -16,7 +16,7 @@ export default function Footer() {
           <div className="flex flex-col items-start gap-3">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.svg" alt="Belleza Íntima" width={48} height={48} />
-              <span className="font-serif text-lg font-semibold text-primary-700">Belleza Íntima</span>
+              <span className="font-serif text-lg font-semibold text-primary-600">Belleza Íntima</span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
               Lencería y más, con amor 🌸<br />
