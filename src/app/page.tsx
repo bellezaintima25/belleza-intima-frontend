@@ -33,11 +33,10 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 py-16 sm:py-24 flex flex-col items-center text-center">
           <Image src="/logo.svg" alt="Belleza Íntima" width={120} height={120} priority className="mb-6" />
           <h1 className="font-serif text-4xl sm:text-5xl font-semibold text-primary-700 leading-tight max-w-2xl">
-            Lencería que realza tu belleza
+            Tu belleza, tu esencia, tu momento.
           </h1>
           <p className="mt-4 text-gray-500 max-w-lg">
-            Sets, corsets y bodies pensados para ti. Elegancia, comodidad y estilo
-            en cada prenda. 🌸
+            Lencería que celebra la mujer que eres.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center">
             <Link

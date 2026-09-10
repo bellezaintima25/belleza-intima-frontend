@@ -60,7 +60,7 @@ function CatalogContent() {
         <h1 className="font-serif text-4xl font-semibold text-primary-700 mb-2">
           {selected ? categoryLabel(selected) : 'Nuestra colección'}
         </h1>
-        <p className="text-gray-500">Lencería y más, con amor 🌸</p>
+        <p className="text-gray-500">Lencería que celebra la mujer que eres.</p>
       </div>
 
       {/* Category filter pills */}

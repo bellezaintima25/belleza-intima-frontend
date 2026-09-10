@@ -19,8 +19,8 @@ export default function Footer() {
               <span className="font-serif text-lg font-semibold text-primary-600">Belleza Íntima</span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Lencería y más, con amor 🌸<br />
-              Encuentra tu estilo con nosotras.
+              Tu belleza, tu esencia, tu momento.<br />
+              Lencería que celebra la mujer que eres.
             </p>
           </div>
 

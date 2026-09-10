@@ -19,15 +19,15 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: 'Belleza Íntima | Lencería y más',
-  description: 'Tienda online de lencería, sets, corsets, bodies y más.',
+  title: 'Belleza Íntima | Tu belleza, tu esencia, tu momento',
+  description: 'Lencería que celebra la mujer que eres. Sets, corsets, bodies y más.',
   icons: {
     icon: '/logo.svg',
     apple: '/logo.svg',
   },
   openGraph: {
     title: 'Belleza Íntima',
-    description: 'Lencería y más, con amor 🌸',
+    description: 'Tu belleza, tu esencia, tu momento. Lencería que celebra la mujer que eres.',
     images: ['/logo.svg'],
   },
 };
