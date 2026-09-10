@@ -7,12 +7,15 @@ import { ShoppingBagIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { api, getImageForColor } from '@/lib/api';
 import type { Product, ProductVariant } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
+import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
 import { formatPrice, categoryLabel } from '@/lib/format';
+import RecentlyViewedSection from '@/components/RecentlyViewedSection';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { addItem, items } = useCart();
+  const { trackProduct } = useRecentlyViewed();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,6 +30,7 @@ export default function ProductDetailPage() {
     api.products.get(Number(id))
       .then((p) => {
         setProduct(p);
+        trackProduct(p);
         const variants = p.variants ?? [];
         const sizes = [...new Set(variants.map((v) => v.size))];
         const colors = [...new Set(variants.map((v) => v.color))];
@@ -156,6 +160,7 @@ export default function ProductDetailPage() {
   const outOfStock = selectedVariant !== null && selectedVariant.stock === 0;
 
   return (
+    <>
     <div className="max-w-4xl mx-auto px-4 py-8">
       <button
         onClick={() => router.back()}
@@ -325,5 +330,8 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+
+    <RecentlyViewedSection excludeIds={product ? [product.id] : []} />
+    </>
   );
 }
