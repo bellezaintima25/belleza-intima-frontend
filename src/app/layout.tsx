@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
+import TopBar from '@/components/TopBar';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className={`${inter.variable} ${playfair.variable} font-sans bg-gray-50 min-h-screen`}>
         <CartProvider>
+          <TopBar />
           <Navbar />
           <CartDrawer />
           <main>{children}</main>
