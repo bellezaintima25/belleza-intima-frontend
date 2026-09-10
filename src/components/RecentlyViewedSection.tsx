@@ -19,7 +19,6 @@ export default function RecentlyViewedSection({ excludeIds = [] }: Props) {
 
   const visible = items.filter((p: Product) => !excludeIds.includes(p.id));
 
-  // Update arrow visibility whenever scroll position or items change
   const updateArrows = () => {
     const el = scrollRef.current;
     if (!el) return;
@@ -34,61 +33,62 @@ export default function RecentlyViewedSection({ excludeIds = [] }: Props) {
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
     if (!el) return;
-    const amount = el.clientWidth * 0.75;
-    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+    el.scrollBy({ left: direction === 'left' ? -(el.clientWidth * 0.75) : el.clientWidth * 0.75, behavior: 'smooth' });
   };
 
   if (!enabled || visible.length === 0) return null;
 
   return (
     <section className="max-w-6xl mx-auto px-4 py-10">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-2xl font-semibold text-primary-700">
-          Visto recientemente
-        </h2>
+      <h2 className="font-serif text-2xl font-semibold text-primary-700 mb-6">
+        Visto recientemente
+      </h2>
 
-        {/* Arrow buttons — only show when there's something to scroll */}
-        {(canScrollLeft || canScrollRight) && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => scroll('left')}
-              disabled={!canScrollLeft}
-              aria-label="Anterior"
-              className={`p-2 rounded-full border transition-colors ${
-                canScrollLeft
-                  ? 'border-gray-200 text-gray-600 hover:border-primary-400 hover:text-primary-600'
-                  : 'border-gray-100 text-gray-300 cursor-not-allowed'
-              }`}
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              disabled={!canScrollRight}
-              aria-label="Siguiente"
-              className={`p-2 rounded-full border transition-colors ${
-                canScrollRight
-                  ? 'border-gray-200 text-gray-600 hover:border-primary-400 hover:text-primary-600'
-                  : 'border-gray-100 text-gray-300 cursor-not-allowed'
-              }`}
-            >
-              <ChevronRightIcon className="h-4 w-4" />
-            </button>
-          </div>
+      {/* Carousel wrapper — arrows are absolute, centered vertically over the cards */}
+      <div className="relative group">
+
+        {/* Left arrow */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scroll('left')}
+            aria-label="Anterior"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10
+                       w-9 h-9 flex items-center justify-center
+                       bg-white border border-gray-200 rounded-full shadow-md
+                       text-gray-600 hover:text-primary-600 hover:border-primary-400
+                       transition-colors"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </button>
         )}
-      </div>
 
-      {/* Scrollable container — native scrollbar hidden via CSS */}
-      <div
-        ref={scrollRef}
-        onScroll={updateArrows}
-        className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {visible.map((product: Product) => (
-          <div key={product.id} className="flex-shrink-0 w-44 sm:w-52">
-            <ProductCard product={product} />
-          </div>
-        ))}
+        {/* Right arrow */}
+        {canScrollRight && (
+          <button
+            onClick={() => scroll('right')}
+            aria-label="Siguiente"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10
+                       w-9 h-9 flex items-center justify-center
+                       bg-white border border-gray-200 rounded-full shadow-md
+                       text-gray-600 hover:text-primary-600 hover:border-primary-400
+                       transition-colors"
+          >
+            <ChevronRightIcon className="h-5 w-5" />
+          </button>
+        )}
+
+        {/* Scrollable track */}
+        <div
+          ref={scrollRef}
+          onScroll={updateArrows}
+          className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {visible.map((product: Product) => (
+            <div key={product.id} className="flex-shrink-0 w-44 sm:w-52">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
