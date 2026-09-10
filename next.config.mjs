@@ -2,7 +2,12 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      // Keep this for any external/CDN images added in the future
+      // Cloudflare R2 public bucket
+      {
+        protocol: 'https',
+        hostname: 'pub-463c68e8bfb54ae3a8372a52d2d2f105.r2.dev',
+      },
+      // Keep this for any other external/CDN images
       {
         protocol: 'https',
         hostname: 'picsum.photos',
