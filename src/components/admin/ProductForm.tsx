@@ -12,8 +12,18 @@ interface ProductFormData {
   base_price: number;
 }
 
+// The `initial` prop can be any object that carries these fields
+// (e.g. an AdminProduct with extra fields like variants/images and nullable description).
+interface ProductFormInitial {
+  code?: string;
+  name?: string;
+  description?: string | null;
+  category?: string;
+  base_price?: number;
+}
+
 interface Props {
-  initial?: Partial<ProductFormData>;
+  initial?: ProductFormInitial;
   onSubmit: (data: object) => Promise<void>;
   submitLabel?: string;
 }

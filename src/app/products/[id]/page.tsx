@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ShoppingBagIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { api, getImageForColor, getImagesForColor } from '@/lib/api';
+import { api, getImageForColor } from '@/lib/api';
 import type { Product, ProductVariant } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
 import { formatPrice, categoryLabel } from '@/lib/format';

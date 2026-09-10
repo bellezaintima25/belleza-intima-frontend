@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: 'Belleza Íntima | Lencería y más',
   description: 'Tienda online de lencería, sets, corsets, bodies y más.',
   icons: {
