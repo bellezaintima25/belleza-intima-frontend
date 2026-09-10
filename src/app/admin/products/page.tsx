@@ -38,7 +38,7 @@ export default function AdminProductsPage() {
   const isLow = (p: AdminProduct) => p.variants.some((v) => v.stock < 2);
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Productos</h1>
@@ -61,7 +61,8 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-gray-100 text-left bg-gray-50">
                 <th className="px-5 py-3 font-semibold text-gray-500">Producto</th>
@@ -128,6 +129,7 @@ export default function AdminProductsPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
