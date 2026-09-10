@@ -14,6 +14,7 @@ export function categoryLabel(cat: string): string {
     CORSET: 'Corsets',
     PANTY: 'Pantys',
     PIJAMA: 'Pijamas',
+    COMBO: 'Combos',
   };
   return labels[cat] ?? cat;
 }

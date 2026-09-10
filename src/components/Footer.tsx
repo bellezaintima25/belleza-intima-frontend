@@ -28,11 +28,12 @@ export default function Footer() {
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Tienda</p>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><Link href="/" className="hover:text-primary-600 transition-colors">Catálogo</Link></li>
-              <li><Link href="/?category=SET" className="hover:text-primary-600 transition-colors">Sets</Link></li>
-              <li><Link href="/?category=CORSET" className="hover:text-primary-600 transition-colors">Corsets</Link></li>
-              <li><Link href="/?category=BODY" className="hover:text-primary-600 transition-colors">Bodies</Link></li>
-              <li><Link href="/?category=PIJAMA" className="hover:text-primary-600 transition-colors">Pijamas</Link></li>
+              <li><Link href="/catalogo" className="hover:text-primary-600 transition-colors">Catálogo</Link></li>
+              <li><Link href="/catalogo?category=SET" className="hover:text-primary-600 transition-colors">Sets</Link></li>
+              <li><Link href="/catalogo?category=CORSET" className="hover:text-primary-600 transition-colors">Corsets</Link></li>
+              <li><Link href="/catalogo?category=BODY" className="hover:text-primary-600 transition-colors">Bodies</Link></li>
+              <li><Link href="/catalogo?category=PIJAMA" className="hover:text-primary-600 transition-colors">Pijamas</Link></li>
+              <li><Link href="/nuestra-marca" className="hover:text-primary-600 transition-colors">Nuestra marca</Link></li>
             </ul>
           </div>
 
