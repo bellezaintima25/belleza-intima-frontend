@@ -39,7 +39,7 @@ export default function ProductCard({ product, priority = false }: Props) {
         <span className="inline-block text-xs font-semibold text-primary-500 uppercase tracking-wider mb-1">
           {categoryLabel(product.category)}
         </span>
-        <h3 className="font-semibold text-gray-800 group-hover:text-primary-700 transition-colors leading-tight">
+        <h3 className="font-serif text-lg text-gray-800 group-hover:text-primary-700 transition-colors leading-tight">
           {product.name}
         </h3>
         <p className="mt-1 text-primary-600 font-bold">{formatPrice(product.base_price)}</p>

@@ -64,7 +64,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Finalizar pedido</h1>
+      <h1 className="font-serif text-3xl font-semibold text-gray-800 mb-6">Finalizar pedido</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Order summary */}

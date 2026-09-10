@@ -60,7 +60,7 @@ function CatalogContent() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Hero */}
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Nuestra colección</h1>
+        <h1 className="font-serif text-4xl font-semibold text-gray-800 mb-2">Nuestra colección</h1>
         <p className="text-gray-500">Lencería y más, con amor 🌸</p>
       </div>
 
