@@ -6,6 +6,7 @@ import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { api } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
+import RecentlyViewedSection from '@/components/RecentlyViewedSection';
 import { categoryLabel } from '@/lib/format';
 
 // Categories to always show as filter pills, even if empty right now.
@@ -142,6 +143,8 @@ function CatalogContent() {
           ))}
         </div>
       )}
+
+      <RecentlyViewedSection />
     </div>
   );
 }
