@@ -12,7 +12,7 @@ import { formatPrice, categoryLabel } from '@/lib/format';
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +99,12 @@ export default function ProductDetailPage() {
   };
 
   const handleSizeSelect = (size: string) => {
+    // Clicking the already-selected size deselects it
+    if (selectedSize === size) {
+      setSelectedSize(null);
+      setSelectedVariant(null);
+      return;
+    }
     // If this size isn't valid for the current color, clear the color
     const colorsForSize = validColorsForSize(size);
     const newColor = selectedColor && colorsForSize.has(selectedColor) ? selectedColor : null;
@@ -112,6 +118,12 @@ export default function ProductDetailPage() {
   };
 
   const handleColorSelect = (color: string) => {
+    // Clicking the already-selected color deselects it
+    if (selectedColor === color) {
+      setSelectedColor(null);
+      setSelectedVariant(null);
+      return;
+    }
     // If this color isn't valid for the current size, clear the size
     const sizesForColor = validSizesForColor(color);
     const newSize = selectedSize && sizesForColor.has(selectedSize) ? selectedSize : null;
@@ -130,7 +142,12 @@ export default function ProductDetailPage() {
   };
 
   const price = selectedVariant?.price ?? product.base_price;
-  const galleryImages = getImagesForColor(product.images, selectedColor);
+
+  // How many of this variant are already in the cart
+  const qtyInCart = items.find((i) => i.variant.id === selectedVariant?.id)?.quantity ?? 0;
+  const canAddMore = selectedVariant ? qtyInCart < selectedVariant.stock : false;
+  // Always show all images in the gallery — highlight color-matched ones
+  const galleryImages = product.images;
   const displayImage = activeImage ?? getImageForColor(product.images, selectedColor);
 
   // Determine add-to-cart button state
@@ -170,25 +187,28 @@ export default function ProductDetailPage() {
 
           {galleryImages.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {galleryImages.map((img) => (
-                <button
-                  key={img.id}
-                  onClick={() => setActiveImage(img.url)}
-                  className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                    activeImage === img.url
-                      ? 'border-primary-500'
-                      : 'border-transparent hover:border-primary-300'
-                  }`}
-                >
-                  <Image
-                    src={img.url}
-                    alt={`${product.name} ${img.color ?? ''}`}
-                    fill
-                    sizes="64px"
-                    className="object-cover"
-                  />
-                </button>
-              ))}
+              {galleryImages.map((img) => {
+                const isColorMatch = !selectedColor || !img.color || img.color.toLowerCase() === selectedColor.toLowerCase();
+                return (
+                  <button
+                    key={img.id}
+                    onClick={() => setActiveImage(img.url)}
+                    className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      activeImage === img.url
+                        ? 'border-primary-500'
+                        : 'border-transparent hover:border-primary-300'
+                    } ${!isColorMatch ? 'opacity-35' : ''}`}
+                  >
+                    <Image
+                      src={img.url}
+                      alt={`${product.name} ${img.color ?? ''}`}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -282,11 +302,11 @@ export default function ProductDetailPage() {
 
           <button
             onClick={handleAddToCart}
-            disabled={!selectedVariant || outOfStock}
+            disabled={!selectedVariant || outOfStock || !canAddMore}
             className={`mt-4 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold transition-all ${
               added
                 ? 'bg-green-500 text-white'
-                : selectedVariant && !outOfStock
+                : selectedVariant && !outOfStock && canAddMore
                 ? 'bg-primary-600 hover:bg-primary-700 text-white'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
@@ -296,6 +316,8 @@ export default function ProductDetailPage() {
               ? '¡Agregado! ✓'
               : outOfStock
               ? 'Sin stock'
+              : !canAddMore && selectedVariant
+              ? `Máximo en carrito (${selectedVariant.stock})`
               : selectedVariant
               ? 'Agregar al carrito'
               : 'Selecciona talla y color'}

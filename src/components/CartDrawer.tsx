@@ -90,11 +90,15 @@ export default function CartDrawer() {
                       <span className="text-sm font-medium w-4 text-center">{item.quantity}</span>
                       <button
                         onClick={() => updateQty(item.variant.id, item.quantity + 1)}
-                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary-400 transition-colors"
+                        disabled={item.quantity >= item.variant.stock}
+                        className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         aria-label="Aumentar cantidad"
                       >
                         +
                       </button>
+                      {item.quantity >= item.variant.stock && (
+                        <span className="text-xs text-amber-500">máx.</span>
+                      )}
                     </div>
                   </div>
                   <button

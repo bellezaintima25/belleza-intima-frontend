@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShoppingBagIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/context/CartContext';
 
@@ -9,9 +10,18 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-primary-100 shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-primary-700 tracking-tight">
-          Belleza Íntima
+      <div className="max-w-6xl mx-auto px-4 py-3 h-24 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="Belleza Íntima — Inicio">
+          <Image
+            src="/logo.svg"
+            alt="Belleza Íntima"
+            width={88}
+            height={88}
+            priority
+          />
+          <span className="text-base font-bold text-primary-700 tracking-tight hidden sm:block">
+            Belleza Íntima
+          </span>
         </Link>
         <nav className="flex items-center gap-6">
           <Link href="/" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
