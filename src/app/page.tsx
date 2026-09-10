@@ -1,19 +1,34 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { api } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import { categoryLabel } from '@/lib/format';
 
-export default function CatalogPage() {
+function CatalogContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlCategory = searchParams.get('category');
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // The selected category is driven by the URL (?category=...)
+  const selected = urlCategory;
+
+  const setSelected = (cat: string | null) => {
+    if (cat) {
+      router.push(`/?category=${encodeURIComponent(cat)}`);
+    } else {
+      router.push('/');
+    }
+  };
 
   useEffect(() => {
     api.products.categories()
@@ -30,7 +45,6 @@ export default function CatalogPage() {
       .finally(() => setLoading(false));
   }, [selected]);
 
-  // Filter by search query client-side (name, description, category)
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return products;
@@ -52,7 +66,6 @@ export default function CatalogPage() {
 
       {/* Filters row: categories left, search right */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-8">
-        {/* Category pills */}
         <div className="flex flex-wrap gap-2 flex-1">
           <button
             onClick={() => setSelected(null)}
@@ -140,5 +153,13 @@ export default function CatalogPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<div className="max-w-6xl mx-auto px-4 py-20 text-center text-gray-400">Cargando...</div>}>
+      <CatalogContent />
+    </Suspense>
   );
 }
