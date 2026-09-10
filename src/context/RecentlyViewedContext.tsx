@@ -4,17 +4,21 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import type { Product } from '@/lib/api';
 
 const STORAGE_KEY = 'recently_viewed';
+const ENABLED_KEY = 'recently_viewed_enabled';
 const MAX_ITEMS = 10;
 
 interface RecentlyViewedContextValue {
   items: Product[];
+  enabled: boolean;
   trackProduct: (product: Product) => void;
+  setEnabled: (enabled: boolean) => void;
 }
 
 const RecentlyViewedContext = createContext<RecentlyViewedContextValue | null>(null);
 
 export function RecentlyViewedProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<Product[]>([]);
+  const [enabled, setEnabledState] = useState(true);
 
   // Load from localStorage on mount (client-side only)
   useEffect(() => {
@@ -23,12 +27,20 @@ export function RecentlyViewedProvider({ children }: { children: ReactNode }) {
       if (stored) {
         setItems(JSON.parse(stored) as Product[]);
       }
+
+      const storedEnabled = localStorage.getItem(ENABLED_KEY);
+      // Default is enabled; only disable if explicitly set to 'false'
+      if (storedEnabled !== null) {
+        setEnabledState(storedEnabled !== 'false');
+      }
     } catch {
       // Ignore parse errors
     }
   }, []);
 
   const trackProduct = (product: Product) => {
+    if (!enabled) return;
+
     setItems((prev) => {
       // Move to front if already present, otherwise prepend; cap at MAX_ITEMS
       const without = prev.filter((p) => p.id !== product.id);
@@ -44,8 +56,17 @@ export function RecentlyViewedProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setEnabled = (value: boolean) => {
+    setEnabledState(value);
+    try {
+      localStorage.setItem(ENABLED_KEY, String(value));
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
   return (
-    <RecentlyViewedContext.Provider value={{ items, trackProduct }}>
+    <RecentlyViewedContext.Provider value={{ items, enabled, trackProduct, setEnabled }}>
       {children}
     </RecentlyViewedContext.Provider>
   );

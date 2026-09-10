@@ -10,7 +10,9 @@ interface Props {
 }
 
 export default function RecentlyViewedSection({ excludeIds = [] }: Props) {
-  const { items } = useRecentlyViewed();
+  const { items, enabled } = useRecentlyViewed();
+
+  if (!enabled) return null;
 
   const visible = items.filter((p: Product) => !excludeIds.includes(p.id));
 
@@ -22,10 +24,10 @@ export default function RecentlyViewedSection({ excludeIds = [] }: Props) {
         Visto recientemente
       </h2>
 
-      {/* Horizontal scroll on mobile, wrap on larger screens */}
-      <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-5">
+      {/* Always horizontal scroll — cards are fixed width so they overflow naturally */}
+      <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
         {visible.map((product: Product) => (
-          <div key={product.id} className="flex-shrink-0 w-44 sm:w-auto">
+          <div key={product.id} className="flex-shrink-0 w-44 sm:w-52">
             <ProductCard product={product} />
           </div>
         ))}
