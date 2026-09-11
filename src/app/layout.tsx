@@ -21,16 +21,48 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: 'Belleza Íntima | Tu belleza, tu esencia, tu momento',
-  description: 'Lencería que celebra la mujer que eres. Sets, corsets, bodies y más.',
+  title: {
+    default: 'Belleza Íntima | Tu belleza, tu esencia, tu momento',
+    template: '%s | Belleza Íntima',
+  },
+  description:
+    'Lencería que celebra la mujer que eres. Sets, corsets, bodies y más. Envíos a toda Colombia.',
+  keywords: [
+    'lencería',
+    'lencería Colombia',
+    'sets de lencería',
+    'corsets',
+    'bodies',
+    'pijamas',
+    'ropa íntima',
+    'Belleza Íntima',
+  ],
+  authors: [{ name: 'Belleza Íntima' }],
+  creator: 'Belleza Íntima',
   icons: {
     icon: '/logo.svg',
     apple: '/logo.svg',
   },
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
+    type: 'website',
+    locale: 'es_CO',
+    siteName: 'Belleza Íntima',
+    title: 'Belleza Íntima | Tu belleza, tu esencia, tu momento',
+    description: 'Lencería que celebra la mujer que eres. Envíos a toda Colombia.',
+    images: [{ url: '/logo.svg', alt: 'Belleza Íntima' }],
+  },
+  twitter: {
+    card: 'summary',
     title: 'Belleza Íntima',
     description: 'Tu belleza, tu esencia, tu momento. Lencería que celebra la mujer que eres.',
     images: ['/logo.svg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
