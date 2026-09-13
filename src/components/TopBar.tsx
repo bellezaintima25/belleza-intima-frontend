@@ -40,27 +40,33 @@ export default function TopBar() {
           )}
         </div>
 
-        {/* Mobile: horizontal scroll */}
-        <div className="md:hidden flex items-center gap-6 py-2 overflow-x-auto whitespace-nowrap">
-          {items.map(({ icon: Icon, label, href }) =>
-            href ? (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 font-medium flex-shrink-0"
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </a>
-            ) : (
-              <span key={label} className="flex items-center gap-1.5 font-medium flex-shrink-0">
-                <Icon className="h-4 w-4" />
-                {label}
-              </span>
-            )
-          )}
+        {/* Mobile: auto-scrolling marquee (no manual horizontal scroll) */}
+        <div className="md:hidden overflow-hidden py-2">
+          <div className="flex w-max animate-marquee items-center whitespace-nowrap">
+            {/* Content duplicated twice for a seamless infinite loop */}
+            {[...items, ...items].map(({ icon: Icon, label, href }, i) =>
+              href ? (
+                <a
+                  key={`${label}-${i}`}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mx-3 flex items-center gap-1.5 font-medium flex-shrink-0"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </a>
+              ) : (
+                <span
+                  key={`${label}-${i}`}
+                  className="mx-3 flex items-center gap-1.5 font-medium flex-shrink-0"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </span>
+              )
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -11,6 +11,8 @@ import {
   Bars3Icon,
 } from '@heroicons/react/24/outline';
 import { useCart } from '@/context/CartContext';
+import { useFavorites } from '@/context/FavoritesContext';
+import { HeartIcon } from '@heroicons/react/24/outline';
 
 const navLinks = [
   { href: '/', label: 'INICIO' },
@@ -25,6 +27,7 @@ const navLinks = [
 
 export default function Navbar() {
   const { itemCount, openCart } = useCart();
+  const { count: favoritesCount } = useFavorites();
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -41,12 +44,12 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-primary-100 shadow-sm">
+    <header className="sticky top-0 z-40 bg-primary-600 border-b border-primary-700 shadow-sm text-primary-500">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Hamburger — mobile only */}
         <button
           onClick={() => setMenuOpen(true)}
-          className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-primary-600 transition-colors"
+          className="lg:hidden p-2 -ml-2 text-primary-500 hover:text-white transition-colors"
           aria-label="Abrir menú"
         >
           <Bars3Icon className="h-6 w-6" />
@@ -54,8 +57,8 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0" aria-label="Belleza Íntima — Inicio">
-          <Image src="/logo.svg" alt="Belleza Íntima" width={72} height={72} priority />
-          <span className="font-serif text-lg font-semibold text-primary-600 tracking-tight hidden xl:block">
+          <Image src="/logo%20header.svg" alt="Belleza Íntima" width={72} height={72} priority />
+          <span className="font-serif text-lg font-semibold text-primary-500 tracking-tight hidden xl:block">
             Belleza Íntima
           </span>
         </Link>
@@ -66,7 +69,7 @@ export default function Navbar() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-xs font-medium tracking-wide text-gray-600 hover:text-primary-600 transition-colors whitespace-nowrap"
+              className="text-xs font-medium tracking-wide text-primary-500 hover:text-white transition-colors whitespace-nowrap"
             >
               {link.label}
             </Link>
@@ -99,7 +102,7 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => setSearchOpen(true)}
-              className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
+              className="p-2 text-primary-500 hover:text-white transition-colors"
               aria-label="Buscar"
             >
               <MagnifyingGlassIcon className="h-6 w-6" />
@@ -108,16 +111,30 @@ export default function Navbar() {
 
           <button
             onClick={openCart}
-            className="relative p-2 text-gray-600 hover:text-primary-600 transition-colors"
+            className="relative p-2 text-primary-500 hover:text-white transition-colors"
             aria-label="Abrir carrito"
           >
             <ShoppingBagIcon className="h-6 w-6" />
             {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-primary-500 text-primary-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center nums">
                 {itemCount}
               </span>
             )}
           </button>
+
+          {/* Favorites (me gusta) — to the right of the cart */}
+          <Link
+            href="/favoritos"
+            className="relative p-2 text-primary-500 hover:text-white transition-colors"
+            aria-label="Ver me gusta"
+          >
+            <HeartIcon className="h-6 w-6" />
+            {favoritesCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary-500 text-primary-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center nums">
+                {favoritesCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
 

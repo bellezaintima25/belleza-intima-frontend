@@ -11,7 +11,7 @@ function StatCard({ label, value, sub, color }: { label: string; value: number |
   return (
     <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
-      <p className={`text-3xl font-bold mt-1 ${color ?? 'text-gray-800'}`}>{value}</p>
+      <p className={`text-3xl font-bold mt-1 nums ${color ?? 'text-gray-800'}`}>{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
     </div>
   );

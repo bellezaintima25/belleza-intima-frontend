@@ -78,7 +78,7 @@ export default function CartDrawer() {
                     <p className="text-xs text-gray-500 mt-0.5">
                       Talla: {item.variant.size} · Color: {item.variant.color}
                     </p>
-                    <p className="text-primary-600 font-bold text-sm mt-1">{formatPrice(price)}</p>
+                    <p className="text-primary-600 font-bold text-sm mt-1 nums">{formatPrice(price)}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => updateQty(item.variant.id, item.quantity - 1)}
@@ -119,7 +119,7 @@ export default function CartDrawer() {
           <div className="px-6 py-5 border-t border-gray-100 space-y-3">
             <div className="flex justify-between text-sm text-gray-600">
               <span>Subtotal</span>
-              <span className="font-bold text-gray-900">{formatPrice(total)}</span>
+              <span className="font-bold text-gray-900 nums">{formatPrice(total)}</span>
             </div>
             <p className="text-xs text-gray-400">El pago se coordina por WhatsApp</p>
             <Link

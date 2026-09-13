@@ -6,22 +6,49 @@ import Image from 'next/image';
 import { api } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
+import TopBar from '@/components/TopBar';
+import CategoryCarousel from '@/components/CategoryCarousel';
 import { categoryLabel } from '@/lib/format';
 
-const CATEGORIES = [
-  { key: 'SET', emoji: '🎀' },
-  { key: 'CORSET', emoji: '🖤' },
-  { key: 'BODY', emoji: '✨' },
-  { key: 'PIJAMA', emoji: '🌙' },
+const DEFAULT_CATEGORIES = [
+  { key: 'SET', image: '/images/ST005-Azul-claro-1.jpeg' },
+  { key: 'CORSET', image: '/images/CT005-Rosa-1.jpeg' },
+  { key: 'BODY', image: '/images/ST011-Azul-claro-1.jpeg' },
+  { key: 'PIJAMA', image: '/images/ST015-Rojo-1.jpeg' },
 ];
 
 export default function HomePage() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
   useEffect(() => {
-    api.products.list()
-      .then((p) => setFeatured(p.slice(0, 4)))
+    // Load admin-managed cover images; fall back to defaults on any error.
+    api.categories.covers()
+      .then((covers) => {
+        if (!covers || covers.length === 0) return;
+        const byKey = new Map(covers.map((c) => [c.category, c.image_url]));
+        setCategories(
+          DEFAULT_CATEGORIES.map((c) => ({
+            ...c,
+            image: byKey.get(c.key) ?? c.image,
+          }))
+        );
+      })
+      .catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    // Prefer admin-selected featured products; fall back to the first few
+    // products so the section is never empty if none are marked yet.
+    api.products.featured()
+      .then((featuredProducts) => {
+        if (featuredProducts.length > 0) {
+          setFeatured(featuredProducts.slice(0, 4));
+          return;
+        }
+        return api.products.list().then((p) => setFeatured(p.slice(0, 4)));
+      })
       .catch(() => null)
       .finally(() => setLoading(false));
   }, []);
@@ -30,56 +57,63 @@ export default function HomePage() {
     <div>
       {/* Hero */}
       <section className="bg-gradient-to-b from-primary-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 py-16 sm:py-24 flex flex-col items-center text-center">
-          <Image src="/logo.svg" alt="Belleza Íntima" width={120} height={120} priority className="mb-6" />
-          <h1 className="font-serif text-4xl sm:text-5xl font-semibold text-primary-700 leading-tight max-w-2xl">
-            Tu belleza, tu esencia, tu momento.
-          </h1>
-          <p className="mt-4 text-gray-500 max-w-lg">
-            Lencería que celebra la mujer que eres.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3 justify-center">
-            <Link
-              href="/catalogo"
-              className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-full transition-colors"
-            >
-              Ver catálogo
-            </Link>
-            <Link
-              href="/nuestra-marca"
-              className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 font-semibold px-8 py-3 rounded-full transition-colors"
-            >
-              Nuestra marca
-            </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <div className="bg-white rounded-3xl shadow-xl ring-1 ring-primary-100/60 px-8 py-10 sm:px-16 sm:py-14 flex flex-col-reverse md:flex-row items-center gap-10 md:gap-16">
+            {/* Left: text + actions */}
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+              <h1 className="font-serif text-4xl sm:text-5xl font-semibold text-primary-700 leading-tight max-w-2xl">
+                Tu belleza, tu esencia, tu momento.
+              </h1>
+              <p className="mt-4 text-gray-500 max-w-lg">
+                Lencería que celebra la mujer que eres.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
+                <Link
+                  href="/catalogo"
+                  className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-full transition-colors"
+                >
+                  Comprar ahora
+                </Link>
+                <Link
+                  href="/nuestra-marca"
+                  className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 font-semibold px-8 py-3 rounded-full transition-colors"
+                >
+                  Nuestra marca
+                </Link>
+              </div>
+            </div>
+
+            {/* Right: logo, sized to match the text block */}
+            <div className="flex-1 flex justify-center md:justify-end">
+              <Image
+                src="/logo.svg"
+                alt="Belleza Íntima"
+                width={420}
+                height={420}
+                priority
+                className="w-56 sm:w-72 md:w-full max-w-sm h-auto"
+              />
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Scene divider — info bar right above the categories */}
+      <TopBar />
 
       {/* Categories */}
       <section className="max-w-6xl mx-auto px-4 py-14">
         <h2 className="font-serif text-2xl font-semibold text-primary-700 text-center mb-8">
           Explora por categoría
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.key}
-              href={`/catalogo?category=${cat.key}`}
-              className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-200 transition-all p-8 flex flex-col items-center gap-3"
-            >
-              <span className="text-4xl group-hover:scale-110 transition-transform">{cat.emoji}</span>
-              <span className="font-medium text-gray-700 group-hover:text-primary-700 transition-colors">
-                {categoryLabel(cat.key)}
-              </span>
-            </Link>
-          ))}
-        </div>
+        {/* Mobile: arrow-driven carousel · Desktop: 4-column grid */}
+        <CategoryCarousel categories={categories} />
       </section>
 
       {/* Featured products */}
       <section className="max-w-6xl mx-auto px-4 pb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="font-serif text-2xl font-semibold text-primary-700">Destacados</h2>
+          <h2 className="font-serif text-2xl font-semibold text-primary-700">Los productos más amados</h2>
           <Link href="/catalogo" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
             Ver todo →
           </Link>

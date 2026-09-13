@@ -3,7 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 import { RecentlyViewedProvider } from '@/context/RecentlyViewedContext';
-import TopBar from '@/components/TopBar';
+import { FavoritesProvider } from '@/context/FavoritesContext';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
@@ -72,11 +72,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${playfair.variable} font-sans bg-gray-50 min-h-screen`}>
         <RecentlyViewedProvider>
           <CartProvider>
-            <TopBar />
-            <Navbar />
-            <CartDrawer />
-            <main>{children}</main>
-            <Footer />
+            <FavoritesProvider>
+              <Navbar />
+              <CartDrawer />
+              <main>{children}</main>
+              <Footer />
+            </FavoritesProvider>
           </CartProvider>
         </RecentlyViewedProvider>
       </body>

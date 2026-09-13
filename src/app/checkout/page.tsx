@@ -80,13 +80,13 @@ export default function CheckoutPage() {
                     {item.variant.size} · {item.variant.color} × {item.quantity}
                   </p>
                 </div>
-                <p className="font-semibold text-gray-800">{formatPrice(price * item.quantity)}</p>
+                <p className="font-semibold text-gray-800 nums">{formatPrice(price * item.quantity)}</p>
               </div>
             );
           })}
           <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-gray-800">
             <span>Total</span>
-            <span className="text-primary-600">{formatPrice(total)}</span>
+            <span className="text-primary-600 nums">{formatPrice(total)}</span>
           </div>
         </div>
 

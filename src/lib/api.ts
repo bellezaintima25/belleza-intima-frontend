@@ -24,6 +24,7 @@ export interface Product {
   description: string | null;
   category: string;
   base_price: number;
+  featured: boolean;
   images: ProductImage[];
   variants?: ProductVariant[];
 }
@@ -60,6 +61,11 @@ export interface WhatsAppLinkOut {
   whatsapp_url: string;
 }
 
+export interface CategoryCover {
+  category: string;
+  image_url: string;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -78,8 +84,12 @@ export const api = {
       const qs = category ? `?category=${encodeURIComponent(category)}` : '';
       return request<Product[]>(`/products${qs}`);
     },
+    featured: () => request<Product[]>(`/products?featured=true`),
     categories: () => request<string[]>('/products/categories'),
     get: (id: number) => request<Product>(`/products/${id}`),
+  },
+  categories: {
+    covers: () => request<CategoryCover[]>('/categories/covers'),
   },
   orders: {
     create: (data: OrderCreate) =>

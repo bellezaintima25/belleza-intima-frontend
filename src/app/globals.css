@@ -2,8 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Primary / display font: Atlane (served from /public/atlane/). */
+@font-face {
+  font-family: 'Atlane';
+  src: url('/atlane/Atlane%20OTF.otf') format('opentype'),
+       local('Atlane'), local('Atlane-Regular');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
   }
+}
+
+/* Hide native scrollbar (used by the arrow-driven carousels). */
+.no-scrollbar {
+  -ms-overflow-style: none;   /* IE / old Edge */
+  scrollbar-width: none;       /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;               /* Chrome / Safari */
+}
+
+/* Numeric values rendered in the Atlane display font. */
+.nums {
+  font-family: 'Atlane', var(--font-playfair), Georgia, serif;
+}
+
+/* Marquee auto-scroll for the mobile top bar.
+   Defined here (not only in tailwind config) so it always reloads reliably. */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* -50% because the track content is duplicated twice for a seamless loop */
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 18s linear infinite;
+}
+
+.animate-marquee:hover,
+.animate-marquee:active {
+  animation-play-state: paused;
 }

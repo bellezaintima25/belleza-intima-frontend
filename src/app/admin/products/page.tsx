@@ -13,6 +13,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [togglingFeatured, setTogglingFeatured] = useState<number | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -22,6 +23,22 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const handleToggleFeatured = async (p: AdminProduct) => {
+    const next = !p.featured;
+    setTogglingFeatured(p.id);
+    // Optimistic update
+    setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, featured: next } : x)));
+    try {
+      await adminApi.products.update(p.id, { featured: next });
+    } catch {
+      // Revert on error
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, featured: !next } : x)));
+      alert('No se pudo actualizar el destacado. Intenta de nuevo.');
+    } finally {
+      setTogglingFeatured(null);
+    }
+  };
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`)) return;
@@ -70,6 +87,7 @@ export default function AdminProductsPage() {
                 <th className="px-5 py-3 font-semibold text-gray-500">Precio base</th>
                 <th className="px-5 py-3 font-semibold text-gray-500">Variantes</th>
                 <th className="px-5 py-3 font-semibold text-gray-500">Stock total</th>
+                <th className="px-5 py-3 font-semibold text-gray-500">Destacado</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
@@ -94,7 +112,7 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3 text-gray-500">{categoryLabel(p.category)}</td>
-                    <td className="px-5 py-3 font-medium text-gray-700">{formatPrice(p.base_price)}</td>
+                    <td className="px-5 py-3 font-medium text-gray-700 nums">{formatPrice(p.base_price)}</td>
                     <td className="px-5 py-3 text-gray-600">{p.variants.length}</td>
                     <td className="px-5 py-3">
                       <span className={`font-semibold ${
@@ -104,6 +122,25 @@ export default function AdminProductsPage() {
                         {totalStock(p)}
                         {isLow(p) && <span className="ml-1 text-amber-400">⚠️</span>}
                       </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <button
+                        onClick={() => handleToggleFeatured(p)}
+                        disabled={togglingFeatured === p.id}
+                        role="switch"
+                        aria-checked={p.featured}
+                        aria-label={p.featured ? 'Quitar de destacados' : 'Marcar como destacado'}
+                        title={p.featured ? 'Destacado — clic para quitar' : 'Marcar como destacado'}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
+                          p.featured ? 'bg-primary-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                            p.featured ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2 justify-end">

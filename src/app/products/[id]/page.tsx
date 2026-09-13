@@ -220,11 +220,11 @@ export default function ProductDetailPage() {
 
         {/* Info */}
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-primary-500 uppercase tracking-wider">
+          <span className="text-sm font-semibold text-primary-200 uppercase tracking-wider">
             {categoryLabel(product.category)}
           </span>
           <h1 className="mt-1 font-serif text-3xl font-semibold text-primary-700">{product.name}</h1>
-          <p className="mt-1 text-2xl font-bold text-primary-600">{formatPrice(price)}</p>
+          <p className="mt-1 text-2xl font-bold text-primary-600 nums">{formatPrice(price)}</p>
 
           {product.description && (
             <p className="mt-3 text-gray-600 text-sm leading-relaxed">{product.description}</p>

@@ -26,6 +26,11 @@ export interface ImageOut {
   sort_order: number;
 }
 
+export interface CategoryCoverOut {
+  category: string;
+  image_url: string;
+}
+
 export interface AdminProduct {
   id: number;
   code: string;
@@ -33,6 +38,7 @@ export interface AdminProduct {
   description: string | null;
   category: string;
   base_price: number;
+  featured: boolean;
   variants: VariantOut[];
   images: ImageOut[];
 }
@@ -119,5 +125,19 @@ export const adminApi = {
 
   orders: {
     list: () => req<AdminOrder[]>('/orders/detailed'),
+  },
+
+  categories: {
+    covers: () => req<CategoryCoverOut[]>('/categories/covers'),
+    setCover: (category: string, imageUrl: string) =>
+      req<CategoryCoverOut>(`/categories/covers/${encodeURIComponent(category)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ image_url: imageUrl }),
+      }),
+    uploadCover: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return req<ImageOut>('/categories/covers/upload', { method: 'POST', body: form });
+    },
   },
 };

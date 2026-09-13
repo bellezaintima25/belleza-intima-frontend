@@ -10,6 +10,7 @@ interface ProductFormData {
   description: string;
   category: string;
   base_price: number;
+  featured: boolean;
 }
 
 // The `initial` prop can be any object that carries these fields
@@ -20,6 +21,7 @@ interface ProductFormInitial {
   description?: string | null;
   category?: string;
   base_price?: number;
+  featured?: boolean;
 }
 
 interface Props {
@@ -35,6 +37,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
     description: initial?.description ?? '',
     category: initial?.category ?? 'SET',
     base_price: initial?.base_price ?? 0,
+    featured: initial?.featured ?? false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,6 +102,18 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
       </div>
 
       {field('Precio base', 'base_price', 'number', { min: '0', step: '100', required: true })}
+
+      <label className="flex items-center gap-3 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={form.featured}
+          onChange={(e) => setForm((p) => ({ ...p, featured: e.target.checked }))}
+          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-400"
+        />
+        <span className="text-sm font-medium text-gray-700">
+          Destacado — aparece en “Los productos más amados”
+        </span>
+      </label>
 
       {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 

@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 const navItems = [
   { href: '/admin', label: 'Dashboard', emoji: '📊' },
   { href: '/admin/products', label: 'Productos', emoji: '👗' },
+  { href: '/admin/covers', label: 'Portadas', emoji: '🖼️' },
   { href: '/admin/orders', label: 'Pedidos', emoji: '📦' },
 ];
 
