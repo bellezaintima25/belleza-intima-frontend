@@ -55,10 +55,14 @@ export default function EditProductPage() {
 
   const handleDeleteVariant = async (variantId: number) => {
     if (!confirm('¿Eliminar esta variante?')) return;
-    await adminApi.variants.delete(Number(id), variantId);
-    setProduct((prev) =>
-      prev ? { ...prev, variants: prev.variants.filter((v) => v.id !== variantId) } : prev
-    );
+    try {
+      await adminApi.variants.delete(Number(id), variantId);
+      setProduct((prev) =>
+        prev ? { ...prev, variants: prev.variants.filter((v) => v.id !== variantId) } : prev
+      );
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'No se pudo eliminar la variante.');
+    }
   };
 
   const handleAddVariant = async () => {

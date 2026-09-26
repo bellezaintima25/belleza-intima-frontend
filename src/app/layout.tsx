@@ -4,9 +4,8 @@ import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 import { RecentlyViewedProvider } from '@/context/RecentlyViewedContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
-import Navbar from '@/components/Navbar';
-import CartDrawer from '@/components/CartDrawer';
-import Footer from '@/components/Footer';
+import StoreChrome from '@/components/StoreChrome';
+import PageLoader from '@/components/PageLoader';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -70,13 +69,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <body className={`${inter.variable} ${playfair.variable} font-sans bg-gray-50 min-h-screen`}>
+        <PageLoader />
         <RecentlyViewedProvider>
           <CartProvider>
             <FavoritesProvider>
-              <Navbar />
-              <CartDrawer />
-              <main>{children}</main>
-              <Footer />
+              <StoreChrome>{children}</StoreChrome>
             </FavoritesProvider>
           </CartProvider>
         </RecentlyViewedProvider>

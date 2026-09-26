@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { adminApi } from '@/lib/adminApi';
-import type { StatsOut, AdminProduct } from '@/lib/adminApi';
+import type { StatsOut, AdminProduct, AdminOrder, PaymentStatus } from '@/lib/adminApi';
 import { formatPrice, categoryLabel } from '@/lib/format';
 import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
 
@@ -17,52 +17,147 @@ function StatCard({ label, value, sub, color }: { label: string; value: number |
   );
 }
 
+const STATUS_LABEL: Record<PaymentStatus, string> = {
+  PENDIENTE: 'Pendientes', PAGADO: 'Pagados', ENVIADO: 'Enviados',
+  ENTREGADO: 'Entregados', CANCELADO: 'Cancelados',
+};
+const STATUS_COLOR: Record<PaymentStatus, string> = {
+  PENDIENTE: 'text-amber-600', PAGADO: 'text-emerald-600', ENVIADO: 'text-sky-600',
+  ENTREGADO: 'text-violet-600', CANCELADO: 'text-rose-600',
+};
+
+function orderTotal(o: AdminOrder): number {
+  return o.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<StatsOut | null>(null);
   const [lowStock, setLowStock] = useState<AdminProduct[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const { enabled: recentlyViewedEnabled, setEnabled: setRecentlyViewedEnabled } = useRecentlyViewed();
 
   useEffect(() => {
-    Promise.all([adminApi.stats(), adminApi.products.list()])
-      .then(([s, products]) => {
+    Promise.all([adminApi.stats(), adminApi.products.list(), adminApi.orders.list()])
+      .then(([s, products, ordersList]) => {
         setStats(s);
-        const low = products.filter((p) =>
-          p.variants.some((v) => v.stock < 2)
-        );
+        setOrders(ordersList);
+        const low = products.filter((p) => p.variants.some((v) => v.stock < 2));
         setLowStock(low);
       })
       .finally(() => setLoading(false));
   }, []);
 
+  // Métricas de pedidos por estado e ingresos (ventas confirmadas).
+  const byStatus = useMemo(() => {
+    const acc: Record<PaymentStatus, number> = {
+      PENDIENTE: 0, PAGADO: 0, ENVIADO: 0, ENTREGADO: 0, CANCELADO: 0,
+    };
+    orders.forEach((o) => { acc[o.payment_status] = (acc[o.payment_status] ?? 0) + 1; });
+    return acc;
+  }, [orders]);
+
+  // Ingresos = suma de totales de pedidos con venta confirmada (stock descontado).
+  const revenue = useMemo(
+    () => orders.filter((o) => o.stock_applied).reduce((s, o) => s + orderTotal(o), 0),
+    [orders],
+  );
+
+  const recentOrders = useMemo(() => orders.slice(0, 5), [orders]);
+
   return (
     <div className="p-4 md:p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Panel de control</h1>
         <p className="text-gray-400 text-sm mt-1">Resumen general de tu tienda</p>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 h-24 animate-pulse" />
           ))}
         </div>
       ) : stats ? (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-            <StatCard label="Productos" value={stats.total_products} />
-            <StatCard label="Variantes" value={stats.total_variants} />
-            <StatCard label="Stock total" value={stats.total_stock} sub="unidades" />
-            <StatCard
-              label="Stock bajo"
-              value={stats.low_stock_variants}
-              sub="variantes con menos de 2 uds."
-              color={stats.low_stock_variants > 0 ? 'text-amber-500' : 'text-gray-800'}
-            />
-            <StatCard label="Pedidos recibidos" value={stats.orders_total} />
-            <StatCard label="Enviados a WhatsApp" value={stats.orders_sent} color="text-green-600" />
+          {/* Accesos rápidos */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Link href="/admin/products/new" className="bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">+ Nuevo producto</Link>
+            <Link href="/admin/products" className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 text-sm font-semibold px-4 py-2 rounded-xl transition-colors">Productos</Link>
+            <Link href="/admin/orders" className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 text-sm font-semibold px-4 py-2 rounded-xl transition-colors">Pedidos</Link>
+            <Link href="/admin/covers" className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 text-sm font-semibold px-4 py-2 rounded-xl transition-colors">Página de inicio</Link>
           </div>
+
+          {/* Tarjetas principales */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StatCard label="Ingresos confirmados" value={formatPrice(revenue)} sub="pedidos con stock descontado" color="text-emerald-600" />
+            <StatCard label="Pedidos" value={orders.length} sub="en total" />
+            <StatCard label="Productos" value={stats.total_products} sub={`${stats.total_variants} variantes`} />
+            <StatCard label="Stock total" value={stats.total_stock} sub="unidades" />
+          </div>
+
+          {/* Pedidos por estado */}
+          <div className="mb-10">
+            <h2 className="text-base font-bold text-gray-700 mb-3">Pedidos por estado</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {(Object.keys(STATUS_LABEL) as PaymentStatus[]).map((st) => (
+                <Link
+                  key={st}
+                  href="/admin/orders"
+                  className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{STATUS_LABEL[st]}</p>
+                  <p className={`text-2xl font-bold mt-1 nums ${STATUS_COLOR[st]}`}>{byStatus[st]}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Stock bajo destacado */}
+          {stats.low_stock_variants > 0 && (
+            <div className="mb-10">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+                <p className="text-sm text-amber-700">
+                  <span className="font-bold">{stats.low_stock_variants}</span> variante(s) con stock bajo (menos de 2 uds.).
+                </p>
+                <Link href="/admin/products?stock=low" className="text-xs font-semibold text-amber-700 hover:underline whitespace-nowrap">Ver productos →</Link>
+              </div>
+            </div>
+          )}
+
+          {/* Pedidos recientes */}
+          {recentOrders.length > 0 && (
+            <div className="mb-10">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-bold text-gray-700">Pedidos recientes</h2>
+                <Link href="/admin/orders" className="text-xs font-semibold text-primary-600 hover:underline">Ver todos →</Link>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left bg-gray-50">
+                      <th className="px-5 py-3 font-semibold text-gray-500">Cliente</th>
+                      <th className="px-5 py-3 font-semibold text-gray-500">Total</th>
+                      <th className="px-5 py-3 font-semibold text-gray-500">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentOrders.map((o) => (
+                      <tr key={o.id} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="px-5 py-3 font-medium text-gray-800">{o.customer_name}</td>
+                        <td className="px-5 py-3 text-gray-700 nums">{formatPrice(orderTotal(o))}</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-semibold ${STATUS_COLOR[o.payment_status]}`}>
+                            {STATUS_LABEL[o.payment_status]}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Recently viewed toggle */}
           <div className="mb-10">

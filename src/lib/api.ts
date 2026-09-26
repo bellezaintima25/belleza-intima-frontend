@@ -22,6 +22,7 @@ export interface Product {
   code: string;
   name: string;
   description: string | null;
+  detail?: string | null;
   category: string;
   base_price: number;
   featured: boolean;
@@ -66,6 +67,31 @@ export interface CategoryCover {
   image_url: string;
 }
 
+export interface HeroPhrase {
+  text: string;
+  type: 'title' | 'paragraph';
+  color: string;
+}
+
+export interface HeroButton {
+  label: string;
+  href: string;
+  variant: 'primary' | 'secondary';
+}
+
+export interface HeroBackground {
+  image_url: string;
+  overlay: number;
+}
+
+export interface HeroContent {
+  phrases: HeroPhrase[];
+  buttons: HeroButton[];
+  background: HeroBackground;
+  show_logo: boolean;
+  logo_url: string;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -90,6 +116,9 @@ export const api = {
   },
   categories: {
     covers: () => request<CategoryCover[]>('/categories/covers'),
+  },
+  site: {
+    hero: () => request<HeroContent>('/site/hero'),
   },
   orders: {
     create: (data: OrderCreate) =>

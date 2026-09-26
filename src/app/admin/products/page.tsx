@@ -1,19 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilSquareIcon, TrashIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminProduct } from '@/lib/adminApi';
 import { formatPrice, categoryLabel } from '@/lib/format';
 import { getImageForColor } from '@/lib/api';
 import Image from 'next/image';
 
+type StockFilter = 'all' | 'in' | 'low' | 'out';
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [togglingFeatured, setTogglingFeatured] = useState<number | null>(null);
+
+  // Búsqueda y filtros
+  const [query, setQuery] = useState('');
+  const [fCategory, setFCategory] = useState('');
+  const [fSize, setFSize] = useState('');
+  const [fColor, setFColor] = useState('');
+  const [fStock, setFStock] = useState<StockFilter>('all');
 
   const load = () => {
     setLoading(true);
@@ -23,6 +32,52 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Preseleccionar filtro de stock si viene por query (?stock=low|out|in).
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search).get('stock');
+    if (sp === 'low' || sp === 'out' || sp === 'in') setFStock(sp);
+  }, []);
+
+  // Opciones de filtro derivadas del catálogo.
+  const categories = useMemo(
+    () => Array.from(new Set(products.map((p) => p.category))).sort(),
+    [products],
+  );
+  const sizes = useMemo(
+    () => Array.from(new Set(products.flatMap((p) => p.variants.map((v) => v.size)))).sort(),
+    [products],
+  );
+  const colors = useMemo(
+    () => Array.from(new Set(products.flatMap((p) => p.variants.map((v) => v.color)))).sort(),
+    [products],
+  );
+
+  const totalStock = (p: AdminProduct) => p.variants.reduce((s, v) => s + v.stock, 0);
+  const isLow = (p: AdminProduct) => p.variants.some((v) => v.stock < 2);
+
+  // Aplicar búsqueda + filtros.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return products.filter((p) => {
+      if (q && !(p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))) return false;
+      if (fCategory && p.category !== fCategory) return false;
+      if (fSize && !p.variants.some((v) => v.size === fSize)) return false;
+      if (fColor && !p.variants.some((v) => v.color === fColor)) return false;
+      if (fStock !== 'all') {
+        const total = totalStock(p);
+        if (fStock === 'in' && total <= 0) return false;
+        if (fStock === 'out' && total !== 0) return false;
+        if (fStock === 'low' && !isLow(p)) return false;
+      }
+      return true;
+    });
+  }, [products, query, fCategory, fSize, fColor, fStock]);
+
+  const hasActiveFilters = query || fCategory || fSize || fColor || fStock !== 'all';
+  const clearFilters = () => {
+    setQuery(''); setFCategory(''); setFSize(''); setFColor(''); setFStock('all');
+  };
 
   const handleToggleFeatured = async (p: AdminProduct) => {
     const next = !p.featured;
@@ -51,15 +106,16 @@ export default function AdminProductsPage() {
     }
   };
 
-  const totalStock = (p: AdminProduct) => p.variants.reduce((s, v) => s + v.stock, 0);
-  const isLow = (p: AdminProduct) => p.variants.some((v) => v.stock < 2);
-
   return (
     <div className="p-4 md:p-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Productos</h1>
-          <p className="text-gray-400 text-sm mt-1">{products.length} productos en catálogo</p>
+          <p className="text-gray-400 text-sm mt-1">
+            {hasActiveFilters
+              ? `${filtered.length} de ${products.length} productos`
+              : `${products.length} productos en catálogo`}
+          </p>
         </div>
         <Link
           href="/admin/products/new"
@@ -69,6 +125,56 @@ export default function AdminProductsPage() {
           Nuevo producto
         </Link>
       </div>
+
+      {/* Búsqueda y filtros */}
+      {!loading && (
+        <div className="mb-5 bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex flex-wrap items-center gap-2">
+          {/* Buscador */}
+          <div className="relative flex-1 min-w-[200px]">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre o código…"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+            />
+          </div>
+
+          <select value={fCategory} onChange={(e) => setFCategory(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-300">
+            <option value="">Categoría: todas</option>
+            {categories.map((c) => <option key={c} value={c}>{categoryLabel(c)}</option>)}
+          </select>
+
+          <select value={fSize} onChange={(e) => setFSize(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-300">
+            <option value="">Talla: todas</option>
+            {sizes.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <select value={fColor} onChange={(e) => setFColor(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-300">
+            <option value="">Color: todos</option>
+            {colors.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          <select value={fStock} onChange={(e) => setFStock(e.target.value as StockFilter)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-300">
+            <option value="all">Stock: todos</option>
+            <option value="in">Con stock</option>
+            <option value="low">Stock bajo</option>
+            <option value="out">Sin stock</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button onClick={clearFilters}
+              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-primary-600 px-2 py-2">
+              <XMarkIcon className="h-4 w-4" /> Limpiar
+            </button>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -92,7 +198,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => {
+              {filtered.map((p) => {
                 const imgUrl = getImageForColor(p.images);
                 return (
                   <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
@@ -167,6 +273,11 @@ export default function AdminProductsPage() {
             </tbody>
           </table>
           </div>
+          {filtered.length === 0 && (
+            <div className="text-center py-12 text-gray-400 text-sm">
+              No hay productos que coincidan con la búsqueda o los filtros.
+            </div>
+          )}
         </div>
       )}
     </div>

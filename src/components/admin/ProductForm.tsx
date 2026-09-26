@@ -8,6 +8,7 @@ interface ProductFormData {
   code?: string;
   name: string;
   description: string;
+  detail: string;
   category: string;
   base_price: number;
   featured: boolean;
@@ -19,6 +20,7 @@ interface ProductFormInitial {
   code?: string;
   name?: string;
   description?: string | null;
+  detail?: string | null;
   category?: string;
   base_price?: number;
   featured?: boolean;
@@ -35,6 +37,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
     code: initial?.code ?? '',
     name: initial?.name ?? '',
     description: initial?.description ?? '',
+    detail: initial?.detail ?? '',
     category: initial?.category ?? 'SET',
     base_price: initial?.base_price ?? 0,
     featured: initial?.featured ?? false,
@@ -81,11 +84,23 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
       {field('Nombre', 'name', 'text', { required: true })}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Frase corta</label>
         <textarea
           value={form.description}
           onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-          rows={3}
+          rows={2}
+          placeholder="Frase breve que aparece bajo el nombre (ej: Encaje delicado y comodidad total)."
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <textarea
+          value={form.detail}
+          onChange={(e) => setForm((p) => ({ ...p, detail: e.target.value }))}
+          rows={4}
+          placeholder="Descripción del producto que aparece debajo del botón de agregar al carrito."
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
         />
       </div>

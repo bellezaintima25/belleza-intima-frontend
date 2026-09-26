@@ -31,11 +31,37 @@ export interface CategoryCoverOut {
   image_url: string;
 }
 
+export interface HeroPhrase {
+  text: string;
+  type: 'title' | 'paragraph';
+  color: string;
+}
+
+export interface HeroButton {
+  label: string;
+  href: string;
+  variant: 'primary' | 'secondary';
+}
+
+export interface HeroBackground {
+  image_url: string;
+  overlay: number;
+}
+
+export interface HeroContent {
+  phrases: HeroPhrase[];
+  buttons: HeroButton[];
+  background: HeroBackground;
+  show_logo: boolean;
+  logo_url: string;
+}
+
 export interface AdminProduct {
   id: number;
   code: string;
   name: string;
   description: string | null;
+  detail?: string | null;
   category: string;
   base_price: number;
   featured: boolean;
@@ -65,11 +91,15 @@ export interface OrderItemDetail {
   } | null;
 }
 
+export type PaymentStatus = 'PENDIENTE' | 'PAGADO' | 'ENVIADO' | 'ENTREGADO' | 'CANCELADO';
+
 export interface AdminOrder {
   id: number;
   customer_name: string;
   customer_phone: string;
   status: 'PENDING' | 'SENT';
+  payment_status: PaymentStatus;
+  stock_applied: boolean;
   created_at: string;
   sent_at: string | null;
   items: OrderItemDetail[];
@@ -125,6 +155,30 @@ export const adminApi = {
 
   orders: {
     list: () => req<AdminOrder[]>('/orders/detailed'),
+    updateStatus: (orderId: number, paymentStatus: PaymentStatus) =>
+      req<AdminOrder>(`/orders/${orderId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ payment_status: paymentStatus }),
+      }),
+    delete: (orderId: number) =>
+      req<void>(`/orders/${orderId}`, { method: 'DELETE' }),
+    addItem: (orderId: number, variantId: number, quantity: number, unitPrice?: number) =>
+      req<AdminOrder>(`/orders/${orderId}/items`, {
+        method: 'POST',
+        body: JSON.stringify({ variant_id: variantId, quantity, unit_price: unitPrice ?? null }),
+      }),
+    updateItemQty: (orderId: number, itemId: number, quantity: number) =>
+      req<AdminOrder>(`/orders/${orderId}/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantity }),
+      }),
+    deleteItem: (orderId: number, itemId: number) =>
+      req<AdminOrder>(`/orders/${orderId}/items/${itemId}`, { method: 'DELETE' }),
+    updateCustomer: (orderId: number, data: { customer_name?: string; customer_phone?: string }) =>
+      req<AdminOrder>(`/orders/${orderId}/customer`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
   },
 
   categories: {
@@ -138,6 +192,17 @@ export const adminApi = {
       const form = new FormData();
       form.append('file', file);
       return req<ImageOut>('/categories/covers/upload', { method: 'POST', body: form });
+    },
+  },
+
+  site: {
+    getHero: () => req<HeroContent>('/site/hero'),
+    updateHero: (data: HeroContent) =>
+      req<HeroContent>('/site/hero', { method: 'PUT', body: JSON.stringify(data) }),
+    uploadLogo: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return req<ImageOut>('/site/hero/logo/upload', { method: 'POST', body: form });
     },
   },
 };

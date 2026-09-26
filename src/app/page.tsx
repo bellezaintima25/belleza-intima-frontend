@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
-import type { Product } from '@/lib/api';
+import type { Product, HeroContent } from '@/lib/api';
+import { resolveHeroColor } from '@/lib/heroPalette';
 import ProductCard from '@/components/ProductCard';
 import TopBar from '@/components/TopBar';
 import CategoryCarousel from '@/components/CategoryCarousel';
@@ -17,10 +18,32 @@ const DEFAULT_CATEGORIES = [
   { key: 'PIJAMA', image: '/images/ST015-Rojo-1.jpeg' },
 ];
 
+const DEFAULT_HERO: HeroContent = {
+  phrases: [
+    { text: 'Tu belleza, tu esencia, tu momento.', type: 'title', color: 'primary-700' },
+    { text: 'Lencería que celebra la mujer que eres.', type: 'paragraph', color: '' },
+  ],
+  buttons: [
+    { label: 'Comprar ahora', href: '/catalogo', variant: 'primary' },
+    { label: 'Nuestra marca', href: '/nuestra-marca', variant: 'secondary' },
+  ],
+  background: { image_url: '', overlay: 0.35 },
+  show_logo: true,
+  logo_url: '/logo.svg',
+};
+
 export default function HomePage() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [hero, setHero] = useState<HeroContent>(DEFAULT_HERO);
+
+  useEffect(() => {
+    // Contenido del hero gestionado por el admin; fallback a los valores por defecto.
+    api.site.hero()
+      .then((h) => { if (h) setHero(h); })
+      .catch(() => null);
+  }, []);
 
   useEffect(() => {
     // Load admin-managed cover images; fall back to defaults on any error.
@@ -58,41 +81,89 @@ export default function HomePage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-primary-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-          <div className="bg-white rounded-3xl shadow-xl ring-1 ring-primary-100/60 px-8 py-10 sm:px-16 sm:py-14 flex flex-col-reverse md:flex-row items-center gap-10 md:gap-16">
-            {/* Left: text + actions */}
-            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
-              <h1 className="font-serif text-4xl sm:text-5xl font-semibold text-primary-700 leading-tight max-w-2xl">
-                Tu belleza, tu esencia, tu momento.
-              </h1>
-              <p className="mt-4 text-gray-500 max-w-lg">
-                Lencería que celebra la mujer que eres.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
-                <Link
-                  href="/catalogo"
-                  className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-full transition-colors"
-                >
-                  Comprar ahora
-                </Link>
-                <Link
-                  href="/nuestra-marca"
-                  className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 font-semibold px-8 py-3 rounded-full transition-colors"
-                >
-                  Nuestra marca
-                </Link>
-              </div>
-            </div>
+          <div className="relative bg-white rounded-3xl shadow-xl ring-1 ring-primary-100/60 overflow-hidden">
+            {/* Imagen de fondo opcional con oscurecido para legibilidad */}
+            {hero.background.image_url && (
+              <>
+                <Image
+                  src={hero.background.image_url}
+                  alt=""
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover"
+                />
+                <div
+                  className="absolute inset-0 bg-black"
+                  style={{ opacity: hero.background.overlay }}
+                  aria-hidden="true"
+                />
+              </>
+            )}
 
-            {/* Right: logo, sized to match the text block */}
-            <div className="flex-1 flex justify-center md:justify-end">
-              <Image
-                src="/logo.svg"
-                alt="Belleza Íntima"
-                width={420}
-                height={420}
-                priority
-                className="w-56 sm:w-72 md:w-full max-w-sm h-auto"
-              />
+            <div className={`relative px-8 py-10 sm:px-16 sm:py-14 flex flex-col-reverse md:flex-row items-center gap-10 md:gap-16 ${
+              hero.background.image_url ? 'text-white' : ''
+            }`}>
+              {/* Left: frases + botones dinámicos */}
+              <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+                {hero.phrases.map((p, i) =>
+                  p.type === 'title' ? (
+                    <h1
+                      key={i}
+                      className="font-serif text-4xl sm:text-5xl font-semibold leading-tight max-w-2xl"
+                      style={{ color: resolveHeroColor(p.color, hero.background.image_url ? '#ffffff' : '#450b3a') }}
+                    >
+                      {p.text}
+                    </h1>
+                  ) : (
+                    <p
+                      key={i}
+                      className="mt-4 max-w-lg"
+                      style={{ color: resolveHeroColor(p.color, hero.background.image_url ? '#f3f4f6' : '#6b7280') }}
+                    >
+                      {p.text}
+                    </p>
+                  )
+                )}
+
+                {hero.buttons.length > 0 && (
+                  <div className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
+                    {hero.buttons.map((b, i) =>
+                      b.variant === 'primary' ? (
+                        <Link
+                          key={i}
+                          href={b.href}
+                          className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-full transition-colors"
+                        >
+                          {b.label}
+                        </Link>
+                      ) : (
+                        <Link
+                          key={i}
+                          href={b.href}
+                          className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 font-semibold px-8 py-3 rounded-full transition-colors"
+                        >
+                          {b.label}
+                        </Link>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right: logo (ocultable) */}
+              {hero.show_logo && (
+                <div className="flex-1 flex justify-center md:justify-end">
+                  <Image
+                    src={hero.logo_url}
+                    alt="Belleza Íntima"
+                    width={420}
+                    height={420}
+                    priority
+                    className="w-56 sm:w-72 md:w-full max-w-sm h-auto"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,20 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ShoppingBagIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassPlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
 import { api, getImageForColor } from '@/lib/api';
 import type { Product, ProductVariant } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
+import { useFavorites } from '@/context/FavoritesContext';
 import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
 import { formatPrice, categoryLabel } from '@/lib/format';
+import SizeGuide from '@/components/SizeGuide';
 import RecentlyViewedSection from '@/components/RecentlyViewedSection';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { addItem, items } = useCart();
+  const { isFavorite, toggle: toggleFavorite } = useFavorites();
   const { trackProduct } = useRecentlyViewed();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -25,6 +31,26 @@ export default function ProductDetailPage() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  // Lightbox / zoom de la imagen principal
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  // Nivel de zoom (1 = ajustado a pantalla). Se controla con la rueda del ratón.
+  const [zoom, setZoom] = useState(1);
+  // Contenedor scrollable del lightbox, para centrar el zoom en el cursor.
+  const zoomScrollRef = useRef<HTMLDivElement | null>(null);
+  // Imagen del lightbox y su ancho "ajustado" (object-contain) a zoom 1,
+  // que sirve de base para que el primer paso de zoom sea suave.
+  const zoomImgRef = useRef<HTMLImageElement | null>(null);
+  const fittedWidthRef = useRef<number>(0);
+  // Estado del arrastre (pan) con el ratón. En refs para no re-renderizar en
+  // cada movimiento; `dragMoved` distingue un arrastre real de un clic simple.
+  const dragState = useRef<{
+    active: boolean;
+    startX: number;
+    startY: number;
+    startScrollLeft: number;
+    startScrollTop: number;
+  }>({ active: false, startX: 0, startY: 0, startScrollLeft: 0, startScrollTop: 0 });
+  const dragMoved = useRef(false);
 
   useEffect(() => {
     api.products.get(Number(id))
@@ -47,6 +73,26 @@ export default function ProductDetailPage() {
       .catch(() => setError('Producto no encontrado.'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Cerrar el lightbox con Escape y bloquear el scroll del fondo mientras está abierto.
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightboxOpen]);
+
+  // Al cerrar el lightbox, reiniciar el zoom.
+  useEffect(() => {
+    if (!lightboxOpen) setZoom(1);
+  }, [lightboxOpen]);
 
   if (loading) {
     return (
@@ -144,8 +190,140 @@ export default function ProductDetailPage() {
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
+  // Zoom con la rueda del ratón, centrado en la posición del cursor.
+  // Mantiene bajo el cursor el mismo punto de la imagen al acercar/alejar.
+  const ZOOM_MIN = 1;
+  const ZOOM_MAX = 4;
+  const handleWheelZoom = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = zoomScrollRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    // Posición del cursor relativa al área visible.
+    const cursorX = e.clientX - rect.left;
+    const cursorY = e.clientY - rect.top;
+
+    // Punto del contenido bajo el cursor, como fracción (0..1) del total actual.
+    const fracX =
+      container.scrollWidth > 0
+        ? (container.scrollLeft + cursorX) / container.scrollWidth
+        : 0.5;
+    const fracY =
+      container.scrollHeight > 0
+        ? (container.scrollTop + cursorY) / container.scrollHeight
+        : 0.5;
+
+    // Nuevo nivel de zoom. El factor es proporcional a la magnitud del desliz
+    // para que funcione bien tanto con rueda de ratón (deltaY grande, ~100) como
+    // con trackpad de portátil (deltaY pequeño y muchos eventos).
+    // Normalizamos el modo de desplazamiento (línea vs pixel).
+    const unit = e.deltaMode === 1 ? 16 : 1; // 1 = líneas -> ~16px
+    const delta = e.deltaY * unit;
+    // Coeficiente pequeño = incrementos suaves y graduales (cada paso pequeño).
+    const SENSITIVITY = 0.0009;
+    const factor = Math.exp(-delta * SENSITIVITY);
+    const nextZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom * factor));
+    if (Math.abs(nextZoom - zoom) < 0.0005) return;
+
+    // Al arrancar el zoom desde el estado ajustado (object-contain), medimos el
+    // ancho renderizado real de la imagen para usarlo como base. Así el primer
+    // paso agranda solo un poco respecto al tamaño ajustado, sin brinco.
+    if (zoom <= 1 && zoomImgRef.current) {
+      fittedWidthRef.current = zoomImgRef.current.getBoundingClientRect().width;
+    }
+
+    // Predecimos con precisión las dimensiones del contenido tras el zoom, a
+    // partir del tamaño AJUSTADO real de la imagen (fittedWidth) y del nuevo
+    // nivel. Así el centrado es exacto y la imagen no "se va" hacia un lado al
+    // empezar a ampliar.
+    const imgRect = zoomImgRef.current?.getBoundingClientRect();
+    const fitted = fittedWidthRef.current || (imgRect ? imgRect.width : container.clientWidth);
+    const aspect = imgRect && imgRect.width > 0 ? imgRect.height / imgRect.width : 1;
+    const predImgW = fitted * nextZoom;
+    const predImgH = predImgW * aspect;
+    const predScrollW = Math.max(container.clientWidth, predImgW);
+    const predScrollH = Math.max(container.clientHeight, predImgH);
+
+    setZoom(nextZoom);
+
+    // Punto objetivo bajo el cursor. Cuando el contenido apenas supera al
+    // contenedor (primeros pasos), el margen desplazable es pequeño y el
+    // resultado queda esencialmente centrado; conforme crece, sigue al cursor.
+    const targetLeft = Math.max(0, Math.min(predScrollW - container.clientWidth, fracX * predScrollW - cursorX));
+    const targetTop = Math.max(0, Math.min(predScrollH - container.clientHeight, fracY * predScrollH - cursorY));
+    requestAnimationFrame(() => {
+      const c = zoomScrollRef.current;
+      if (!c) return;
+      c.scrollLeft = targetLeft;
+      c.scrollTop = targetTop;
+    });
+  };
+
+  // --- Arrastre (pan) con el ratón cuando hay zoom -------------------- //
+  // Guardamos el estado del arrastre en refs (declaradas arriba, antes de los
+  // returns condicionales, para respetar las reglas de los hooks).
+  const handlePanStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    const c = zoomScrollRef.current;
+    if (!c || zoom <= 1) return; // solo se arrastra cuando hay zoom
+    if (e.button !== 0) return; // solo botón izquierdo
+    dragState.current = {
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      startScrollLeft: c.scrollLeft,
+      startScrollTop: c.scrollTop,
+    };
+    dragMoved.current = false;
+  };
+
+  const handlePanMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const s = dragState.current;
+    const c = zoomScrollRef.current;
+    if (!s.active || !c) return;
+    e.preventDefault();
+    const dx = e.clientX - s.startX;
+    const dy = e.clientY - s.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true;
+    // Arrastrar en la dirección deseada: mover el ratón a la derecha desplaza
+    // el contenido hacia la derecha (scrollLeft disminuye).
+    c.scrollLeft = s.startScrollLeft - dx;
+    c.scrollTop = s.startScrollTop - dy;
+  };
+
+  const handlePanEnd = () => {
+    dragState.current.active = false;
+  };
+
+  // Cierra el visor si el clic cae en la zona negra FUERA de la imagen, dejando
+  // un margen de tolerancia alrededor de la imagen para evitar cierres
+  // accidentales cuando se hace clic cerca del borde.
+  const CLOSE_MARGIN_PX = 28;
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    // Un arrastre no debe interpretarse como intento de cerrar.
+    if (dragMoved.current) {
+      dragMoved.current = false;
+      return;
+    }
+    const img = zoomImgRef.current;
+    if (!img) {
+      setLightboxOpen(false);
+      return;
+    }
+    const r = img.getBoundingClientRect();
+    const outside =
+      e.clientX < r.left - CLOSE_MARGIN_PX ||
+      e.clientX > r.right + CLOSE_MARGIN_PX ||
+      e.clientY < r.top - CLOSE_MARGIN_PX ||
+      e.clientY > r.bottom + CLOSE_MARGIN_PX;
+    if (outside) setLightboxOpen(false);
+  };
 
   const price = selectedVariant?.price ?? product.base_price;
+
+  // Whether this product is in the user's favorites (me gusta)
+  const favorite = isFavorite(product.id);
 
   // How many of this variant are already in the cart
   const qtyInCart = items.find((i) => i.variant.id === selectedVariant?.id)?.quantity ?? 0;
@@ -175,19 +353,46 @@ export default function ProductDetailPage() {
         <div className="flex flex-col gap-3">
           <div className="aspect-[3/4] relative bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl overflow-hidden">
             {displayImage ? (
-              <Image
-                src={displayImage}
-                alt={product.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-                priority
-              />
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                className="group absolute inset-0 w-full h-full cursor-zoom-in"
+                aria-label="Ampliar imagen"
+              >
+                <Image
+                  src={displayImage}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  priority
+                />
+                {/* Indicador de ampliar (zoom) */}
+                <span className="absolute bottom-3 right-3 h-9 w-9 rounded-full bg-white/85 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-600 group-hover:text-primary-600 transition-colors">
+                  <MagnifyingGlassPlusIcon className="h-5 w-5" />
+                </span>
+              </button>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-8xl">🌸</span>
               </div>
             )}
+
+            {/* Favoritos (me gusta) — encima de la imagen, esquina superior derecha */}
+            <button
+              type="button"
+              onClick={() => toggleFavorite(product)}
+              aria-pressed={favorite}
+              aria-label={favorite ? 'Quitar de me gusta' : 'Agregar a me gusta'}
+              title={favorite ? 'Quitar de me gusta' : 'Agregar a me gusta'}
+              className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-white/85 backdrop-blur-sm shadow-sm flex items-center justify-center hover:bg-white transition-colors"
+            >
+              {favorite ? (
+                <HeartSolid className="h-6 w-6 text-primary-600" />
+              ) : (
+                <HeartOutline className="h-6 w-6 text-gray-500" />
+              )}
+            </button>
           </div>
 
           {galleryImages.length > 1 && (
@@ -233,7 +438,10 @@ export default function ProductDetailPage() {
           {/* Size selector */}
           {sizes.length > 0 && (
             <div className="mt-6">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Talla</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-gray-700">Talla</p>
+                <SizeGuide />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {sizes.map((size) => {
                   const isAvailable = availableSizes.has(size);
@@ -308,7 +516,7 @@ export default function ProductDetailPage() {
           <button
             onClick={handleAddToCart}
             disabled={!selectedVariant || outOfStock || !canAddMore}
-            className={`mt-4 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold transition-all ${
+            className={`mt-4 w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold transition-all ${
               added
                 ? 'bg-green-500 text-white'
                 : selectedVariant && !outOfStock && canAddMore
@@ -327,9 +535,93 @@ export default function ProductDetailPage() {
               ? 'Agregar al carrito'
               : 'Selecciona talla y color'}
           </button>
+
+          {/* Breve descripción del producto */}
+          {product.detail && (
+            <div className="mt-5 pt-5 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Descripción</p>
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{product.detail}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
+
+    {/* Lightbox / zoom de la imagen */}
+    {lightboxOpen && displayImage && (
+      <div
+        className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Imagen ampliada"
+        onClick={handleBackdropClick}
+      >
+        {/* Cerrar */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+          className="absolute top-4 right-4 z-10 h-11 w-11 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors"
+          aria-label="Cerrar"
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+
+        {/* Área scrollable con la imagen. El zoom se controla con la rueda del
+            ratón; al ampliar, la imagen crece en tamaño real (no con transform)
+            y se muestra como bloque dentro del contenedor con overflow-auto, de
+            modo que el scroll llegue a los cuatro bordes (incluido el izquierdo). */}
+        <div
+          ref={zoomScrollRef}
+          className={`lightbox-scroll w-full h-full max-w-6xl max-h-[92vh] mx-auto overflow-auto select-none grid place-items-center ${
+            zoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''
+          }`}
+          onWheel={handleWheelZoom}
+          onMouseDown={handlePanStart}
+          onMouseMove={handlePanMove}
+          onMouseUp={handlePanEnd}
+          onMouseLeave={handlePanEnd}
+          onClick={handleBackdropClick}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={zoomImgRef}
+            src={displayImage}
+            alt={product.name}
+            className={`select-none ${
+              zoom > 1
+                ? 'block max-w-none'
+                : 'max-h-[92vh] max-w-full w-auto h-auto object-contain'
+            }`}
+            style={
+              zoom > 1
+                ? {
+                    // El ancho se basa en el tamaño AJUSTADO real de la imagen
+                    // multiplicado por el nivel de zoom, de modo que el primer
+                    // paso solo agranda un poco (sin brinco desde "contain").
+                    width:
+                      fittedWidthRef.current > 0
+                        ? `${fittedWidthRef.current * zoom}px`
+                        : `${zoom * 100}%`,
+                    height: 'auto',
+                    maxWidth: 'none',
+                    // Transición suave: el zoom crece/decrece de forma
+                    // progresiva y gradual entre niveles.
+                    transition: 'width 280ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  }
+                : undefined
+            }
+            draggable={false}
+          />
+        </div>
+
+        {/* Ayuda */}
+        <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-xs pointer-events-none">
+          {zoom > 1
+            ? `Zoom ${zoom.toFixed(1)}× · rueda o trackpad para acercar/alejar · clic y arrastra para mover`
+            : 'Usa la rueda del ratón o el trackpad sobre la imagen para acercar'}
+        </p>
+      </div>
+    )}
 
     <RecentlyViewedSection excludeIds={product ? [product.id] : []} />
     </>
