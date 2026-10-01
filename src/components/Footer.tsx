@@ -11,7 +11,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
   // derechos reservados y botón de volver arriba.
   if (compact) {
     return (
-      <footer className="bg-white border-t border-primary-100 mt-16">
+      <footer className="relative z-20 bg-white border-t border-primary-100 mt-16">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link href="/admin" className="flex items-center gap-2">
             <Image src="/logo.svg" alt="Belleza Íntima" width={36} height={36} />
@@ -38,10 +38,10 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
   return (
     <footer className="bg-white border-t border-primary-100 mt-16">
       <div className="max-w-6xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8 text-center sm:text-left">
 
           {/* Brand */}
-          <div className="flex flex-col items-start gap-3">
+          <div className="flex flex-col items-center sm:items-start gap-3">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.svg" alt="Belleza Íntima" width={48} height={48} />
               <span className="font-serif text-lg font-semibold text-primary-600">Belleza Íntima</span>
@@ -70,7 +70,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
             <p className="text-sm font-bold text-primary-700 uppercase tracking-wider mb-4">Contacto</p>
 
             {/* Redes en paralelo: ícono arriba, etiqueta debajo */}
-            <div className="flex items-start gap-6">
+            <div className="flex items-start justify-center sm:justify-start gap-6">
               {/* WhatsApp */}
               <a
                 href="https://wa.me/573217795555"
@@ -128,7 +128,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-gray-100 pt-6 flex items-center justify-between">
+        <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center">
           <p className="text-xs text-gray-400">
             © {new Date().getFullYear()} Belleza Íntima. Todos los derechos reservados.
           </p>

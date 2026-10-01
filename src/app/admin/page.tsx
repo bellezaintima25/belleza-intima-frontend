@@ -53,7 +53,10 @@ export default function AdminDashboard() {
     const acc: Record<PaymentStatus, number> = {
       PENDIENTE: 0, PAGADO: 0, ENVIADO: 0, ENTREGADO: 0, CANCELADO: 0,
     };
-    orders.forEach((o) => { acc[o.payment_status] = (acc[o.payment_status] ?? 0) + 1; });
+    orders.forEach((o) => {
+      const st = (o.payment_status in acc ? o.payment_status : 'PENDIENTE') as PaymentStatus;
+      acc[st] = (acc[st] ?? 0) + 1;
+    });
     return acc;
   }, [orders]);
 
@@ -142,17 +145,20 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentOrders.map((o) => (
+                    {recentOrders.map((o) => {
+                      const st = (STATUS_LABEL[o.payment_status] ? o.payment_status : 'PENDIENTE') as PaymentStatus;
+                      return (
                       <tr key={o.id} className="border-b border-gray-50 hover:bg-gray-50">
                         <td className="px-5 py-3 font-medium text-gray-800">{o.customer_name}</td>
                         <td className="px-5 py-3 text-gray-700 nums">{formatPrice(orderTotal(o))}</td>
                         <td className="px-5 py-3">
-                          <span className={`text-xs font-semibold ${STATUS_COLOR[o.payment_status]}`}>
-                            {STATUS_LABEL[o.payment_status]}
+                          <span className={`text-xs font-semibold ${STATUS_COLOR[st]}`}>
+                            {STATUS_LABEL[st]}
                           </span>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>

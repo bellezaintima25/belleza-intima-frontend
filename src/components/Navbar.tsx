@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -9,20 +9,27 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
   Bars3Icon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { useCart } from '@/context/CartContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { HeartIcon } from '@heroicons/react/24/outline';
 
-const navLinks = [
+// Enlaces principales del header. 'Catálogo' despliega las categorías al pasar el cursor.
+const mainLinks = [
   { href: '/', label: 'INICIO' },
-  { href: '/catalogo', label: 'CATÁLOGO' },
-  { href: '/catalogo?category=BODY', label: 'BODIES' },
-  { href: '/catalogo?category=CORSET', label: 'CORSETS' },
-  { href: '/catalogo?category=SET', label: 'SETS' },
-  { href: '/catalogo?category=PIJAMA', label: 'PIJAMAS' },
+  { href: '/catalogo', label: 'CATÁLOGO', hasDropdown: true },
   { href: '/catalogo?category=COMBO', label: 'COMBOS' },
   { href: '/nuestra-marca', label: 'NUESTRA MARCA' },
+];
+
+// Categorías mostradas en el desplegable de 'Catálogo'.
+const catalogCategories = [
+  { href: '/catalogo', label: 'Ver todo' },
+  { href: '/catalogo?category=BODY', label: 'Bodies' },
+  { href: '/catalogo?category=CORSET', label: 'Corsets' },
+  { href: '/catalogo?category=SET', label: 'Sets' },
+  { href: '/catalogo?category=PIJAMA', label: 'Pijamas' },
 ];
 
 export default function Navbar() {
@@ -32,6 +39,19 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
+  // Desplegable de categorías de "Catálogo" (desktop, hover/teclado).
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const catalogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openCatalog = () => {
+    if (catalogTimer.current) clearTimeout(catalogTimer.current);
+    setCatalogOpen(true);
+  };
+  // Pequeño retardo al cerrar para poder mover el cursor hacia el menú.
+  const closeCatalog = () => {
+    if (catalogTimer.current) clearTimeout(catalogTimer.current);
+    catalogTimer.current = setTimeout(() => setCatalogOpen(false), 150);
+  };
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +65,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 bg-primary-600 border-b border-primary-700 shadow-sm text-primary-500">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4 relative">
         {/* Hamburger — mobile only */}
         <button
           onClick={() => setMenuOpen(true)}
@@ -55,8 +75,12 @@ export default function Navbar() {
           <Bars3Icon className="h-6 w-6" />
         </button>
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0" aria-label="Belleza Íntima — Inicio">
+        {/* Logo — centrado en móvil (absoluto), en el flujo a la izquierda en desktop */}
+        <Link
+          href="/"
+          aria-label="Belleza Íntima — Inicio"
+          className="flex items-center gap-2.5 flex-shrink-0 absolute left-1/2 -translate-x-1/2 lg:static lg:left-auto lg:translate-x-0"
+        >
           <Image src="/logoB.svg" alt="Belleza Íntima" width={72} height={72} priority />
           <span className="font-serif text-lg font-semibold text-primary-500 tracking-tight hidden xl:block">
             Belleza Íntima
@@ -64,16 +88,56 @@ export default function Navbar() {
         </Link>
 
         {/* Nav menu — desktop */}
-        <nav className="hidden lg:flex items-center gap-5 flex-1 justify-center">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="text-xs font-medium tracking-wide text-primary-500 hover:text-white transition-colors whitespace-nowrap"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center">
+          {mainLinks.map((link) =>
+            link.hasDropdown ? (
+              <div
+                key={link.label}
+                className="relative"
+                onMouseEnter={openCatalog}
+                onMouseLeave={closeCatalog}
+              >
+                <Link
+                  href={link.href}
+                  className="flex items-center gap-1 text-xs font-medium tracking-wide text-primary-500 hover:text-white transition-colors whitespace-nowrap"
+                  aria-haspopup="true"
+                  aria-expanded={catalogOpen}
+                  onFocus={openCatalog}
+                >
+                  {link.label}
+                  <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${catalogOpen ? 'rotate-180' : ''}`} />
+                </Link>
+
+                {/* Desplegable de categorías */}
+                <div
+                  className={`absolute left-1/2 -translate-x-1/2 top-full pt-3 w-48 transition-opacity ${
+                    catalogOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+                  }`}
+                >
+                  <div className="bg-white rounded-xl shadow-xl ring-1 ring-black/5 overflow-hidden py-1">
+                    {catalogCategories.map((cat) => (
+                      <Link
+                        key={cat.label}
+                        href={cat.href}
+                        onClick={() => setCatalogOpen(false)}
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                      >
+                        {cat.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-xs font-medium tracking-wide text-primary-500 hover:text-white transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ),
+          )}
         </nav>
 
         {/* Search + cart */}
@@ -170,15 +234,31 @@ export default function Navbar() {
           </button>
         </div>
         <nav className="flex flex-col py-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="px-5 py-3 text-sm font-medium tracking-wide text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors border-b border-gray-50"
-            >
-              {link.label}
-            </Link>
+          {mainLinks.map((link) => (
+            <div key={link.label}>
+              <Link
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="block px-5 py-3 text-sm font-medium tracking-wide text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors border-b border-gray-50"
+              >
+                {link.label}
+              </Link>
+              {/* Bajo "Catálogo": categorías indentadas (en móvil no hay hover). */}
+              {link.hasDropdown && (
+                <div className="bg-gray-50/60">
+                  {catalogCategories.filter((c) => c.label !== 'Ver todo').map((cat) => (
+                    <Link
+                      key={cat.label}
+                      href={cat.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="block pl-9 pr-5 py-2.5 text-sm text-gray-500 hover:bg-primary-50 hover:text-primary-600 transition-colors border-b border-gray-50"
+                    >
+                      {cat.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
       </div>

@@ -47,9 +47,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </header>
 
       <div className="md:flex">
-        {/* Desktop sidebar */}
-        <aside className="hidden md:flex w-56 bg-white border-r border-gray-100 flex-col fixed h-[calc(100%-3.5rem)] z-10 shadow-sm">
-          <nav className="flex-1 px-3 py-4 space-y-1">
+        {/* Desktop sidebar — fija, llega hasta el fondo; el footer queda por encima */}
+        <aside className="hidden md:flex w-56 bg-white border-r border-gray-100 flex-col fixed top-14 bottom-0 z-10 shadow-sm">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => (
               <Link
                 key={item.href}

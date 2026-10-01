@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { adminApi } from '@/lib/adminApi';
-import type { HeroContent, HeroPhrase, HeroButton } from '@/lib/adminApi';
-import { HERO_PALETTE, resolveHeroColor } from '@/lib/heroPalette';
+import type { HeroContent, HeroPhrase, HeroButton, HeroVersion } from '@/lib/adminApi';
+import { HERO_PALETTE } from '@/lib/heroPalette';
 import { categoryLabel } from '@/lib/format';
+import HeroCanvas from '@/components/admin/HeroCanvas';
 
 const CATEGORY_KEYS = ['SET', 'CORSET', 'BODY', 'PIJAMA'];
 
@@ -29,16 +30,23 @@ export default function AdminHomePage() {
   const [heroSaving, setHeroSaving] = useState(false);
   const [heroMsg, setHeroMsg] = useState<string | null>(null);
   const [heroErr, setHeroErr] = useState<string | null>(null);
+  const [history, setHistory] = useState<HeroVersion[]>([]);
+  const [historyBusy, setHistoryBusy] = useState<number | null>(null);
+  const [versionName, setVersionName] = useState('');
+  // Texto en edición de los inputs de tamaño (clave = índice de frase).
+  // Permite escribir/borrar libremente; el valor se valida al salir del campo.
+  const [sizeDraft, setSizeDraft] = useState<Record<number, string>>({});
   const logoInput = useRef<HTMLInputElement | null>(null);
   const bgInput = useRef<HTMLInputElement | null>(null);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [coverList, products, heroData] = await Promise.all([
+      const [coverList, products, heroData, historyData] = await Promise.all([
         adminApi.categories.covers(),
         adminApi.products.list(),
         adminApi.site.getHero(),
+        adminApi.site.history(),
       ]);
       const map: Record<string, string> = {};
       coverList.forEach((c) => { map[c.category] = c.image_url; });
@@ -47,8 +55,17 @@ export default function AdminHomePage() {
       products.forEach((p) => p.images.forEach((img) => urls.add(img.url)));
       setCatalogImages(Array.from(urls));
       setHero(heroData);
+      setHistory(historyData);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshHistory = async () => {
+    try {
+      setHistory(await adminApi.site.history());
+    } catch {
+      /* no bloquea la UI si falla la recarga del historial */
     }
   };
 
@@ -56,9 +73,19 @@ export default function AdminHomePage() {
 
   // ---- Frases ----
   const addPhrase = () =>
-    setHero((h) => ({ ...h, phrases: [...h.phrases, { text: '', type: 'paragraph', color: '' }] }));
+    setHero((h) => ({ ...h, phrases: [...h.phrases, { text: '', type: 'paragraph', color: '', align: 'left' }] }));
   const updatePhrase = (i: number, patch: Partial<HeroPhrase>) =>
     setHero((h) => ({ ...h, phrases: h.phrases.map((p, idx) => (idx === i ? { ...p, ...patch } : p)) }));
+  // Sube/baja el tamaño de la frase i en `delta` px desde el valor actual (rango 8–120).
+  const bumpSize = (i: number, delta: number) =>
+    setHero((h) => ({
+      ...h,
+      phrases: h.phrases.map((p, idx) => {
+        if (idx !== i) return p;
+        const base = p.font_size ?? (p.type === 'title' ? 32 : 14);
+        return { ...p, font_size: Math.max(8, Math.min(120, base + delta)) };
+      }),
+    }));
   const removePhrase = (i: number) =>
     setHero((h) => ({ ...h, phrases: h.phrases.filter((_, idx) => idx !== i) }));
   const movePhrase = (i: number, dir: -1 | 1) =>
@@ -87,13 +114,100 @@ export default function AdminHomePage() {
     }
     setHeroSaving(true);
     try {
-      const updated = await adminApi.site.updateHero(hero);
+      const updated = await adminApi.site.updateHero(hero, versionName.trim() || undefined);
       setHero(updated);
-      setHeroMsg('Cambios guardados. Se verán en la página de inicio.');
+      await refreshHistory();
+      setVersionName('');
+      setHeroMsg('Versión nueva creada y puesta en uso.');
     } catch (e) {
       setHeroErr(e instanceof Error ? e.message : 'No se pudieron guardar los cambios.');
     } finally {
       setHeroSaving(false);
+    }
+  };
+
+  // ---- Historial de versiones ----
+  const restoreVersion = async (v: HeroVersion) => {
+    const label = v.name?.trim() || versionSummary(v.content);
+    if (!confirm(`¿Usar la versión "${label}"? Se aplicará de inmediato en la página de inicio.`)) return;
+    setHeroErr(null);
+    setHeroMsg(null);
+    setHistoryBusy(v.id);
+    try {
+      const applied = await adminApi.site.restoreVersion(v.id);
+      setHero(applied);
+      await refreshHistory();
+      setHeroMsg(`Ahora está en uso: "${label}".`);
+    } catch (e) {
+      setHeroErr(e instanceof Error ? e.message : 'No se pudo usar la versión.');
+    } finally {
+      setHistoryBusy(null);
+    }
+  };
+
+  const deleteVersion = async (versionId: number) => {
+    if (!confirm('¿Eliminar esta versión del historial? Esta acción no se puede deshacer.')) return;
+    setHeroErr(null);
+    setHeroMsg(null);
+    setHistoryBusy(versionId);
+    try {
+      await adminApi.site.deleteVersion(versionId);
+      await refreshHistory();
+      setHeroMsg('Versión eliminada del historial.');
+    } catch (e) {
+      setHeroErr(e instanceof Error ? e.message : 'No se pudo eliminar la versión.');
+    } finally {
+      setHistoryBusy(null);
+    }
+  };
+
+  const renameVersion = async (v: HeroVersion) => {
+    const current = v.name?.trim() || '';
+    const next = prompt('Nuevo nombre para la versión:', current);
+    if (next === null) return; // cancelado
+    setHeroErr(null);
+    setHeroMsg(null);
+    setHistoryBusy(v.id);
+    try {
+      await adminApi.site.renameVersion(v.id, next.trim());
+      await refreshHistory();
+      setHeroMsg('Nombre actualizado.');
+    } catch (e) {
+      setHeroErr(e instanceof Error ? e.message : 'No se pudo renombrar la versión.');
+    } finally {
+      setHistoryBusy(null);
+    }
+  };
+
+  const duplicateVersion = async (v: HeroVersion) => {
+    setHeroErr(null);
+    setHeroMsg(null);
+    setHistoryBusy(v.id);
+    try {
+      await adminApi.site.duplicateVersion(v.id);
+      await refreshHistory();
+      setHeroMsg('Versión duplicada. La copia quedó en el historial (no en uso).');
+    } catch (e) {
+      setHeroErr(e instanceof Error ? e.message : 'No se pudo duplicar la versión.');
+    } finally {
+      setHistoryBusy(null);
+    }
+  };
+
+  const pinVersion = async (v: HeroVersion) => {
+    const label = v.name?.trim() || versionSummary(v.content);
+    if (!confirm(`¿Fijar "${label}" como versión principal? Reemplazará a la principal actual.`)) return;
+    setHeroErr(null);
+    setHeroMsg(null);
+    setHistoryBusy(v.id);
+    try {
+      await adminApi.site.pinVersion(v.id);
+      await refreshHistory();
+      setHeroMsg(`"${label}" ahora es la versión principal.`);
+    } catch (e) {
+      setHeroErr(e instanceof Error ? e.message : 'No se pudo fijar la versión principal.');
+    } finally {
+      setHistoryBusy(null);
     }
   };
 
@@ -143,6 +257,20 @@ export default function AdminHomePage() {
 
   const inputCls =
     'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300';
+
+  // Resumen corto del contenido de una versión (primer título/frase).
+  const versionSummary = (c: HeroContent) => {
+    const title = c.phrases.find((p) => p.type === 'title' && p.text.trim());
+    const any = c.phrases.find((p) => p.text.trim());
+    const text = (title ?? any)?.text?.trim();
+    return text ? (text.length > 60 ? text.slice(0, 60) + '…' : text) : 'Sin texto';
+  };
+
+  // Fecha de creación legible.
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleString('es-CO', {
+      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
 
   // Selector de color reutilizable (paleta + custom).
   const ColorPicker = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
@@ -214,6 +342,68 @@ export default function AdminHomePage() {
                           <option value="paragraph">Párrafo</option>
                         </select>
                         <ColorPicker value={p.color} onChange={(v) => updatePhrase(i, { color: v })} />
+                        {/* Alineación del texto */}
+                        <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 p-0.5">
+                          {([
+                            { v: 'left', label: '⬅', title: 'Izquierda' },
+                            { v: 'center', label: '⬌', title: 'Centrar' },
+                            { v: 'right', label: '➡', title: 'Derecha' },
+                          ] as const).map((opt) => (
+                            <button
+                              key={opt.v}
+                              type="button"
+                              title={opt.title}
+                              onClick={() => updatePhrase(i, { align: opt.v })}
+                              className={`h-6 w-6 rounded text-xs ${
+                                (p.align ?? 'left') === opt.v ? 'bg-primary-600 text-white' : 'text-gray-500 hover:bg-gray-100'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Tamaño del texto (px) */}
+                        <label className="flex items-center gap-1 text-xs text-gray-500" title="Tamaño del texto en píxeles">
+                          <span>Tamaño</span>
+                          <button
+                            type="button"
+                            title="Reducir"
+                            onClick={() => { setSizeDraft((d) => { const n = { ...d }; delete n[i]; return n; }); bumpSize(i, -1); }}
+                            className="h-6 w-6 rounded border border-gray-200 text-gray-600 hover:bg-gray-100"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={sizeDraft[i] ?? String(p.font_size ?? (p.type === 'title' ? 32 : 14))}
+                            onChange={(e) => {
+                              // Deja escribir/borrar libremente: solo dígitos (o vacío).
+                              const raw = e.target.value.replace(/[^0-9]/g, '');
+                              setSizeDraft((d) => ({ ...d, [i]: raw }));
+                              // Previsualiza en vivo si ya hay un número (sin forzar el rango aquí).
+                              if (raw !== '') updatePhrase(i, { font_size: Number(raw) });
+                            }}
+                            onBlur={() => {
+                              // Al salir: validar el rango y aplicar; limpiar el borrador.
+                              const raw = sizeDraft[i];
+                              setSizeDraft((d) => { const n = { ...d }; delete n[i]; return n; });
+                              if (raw === undefined) return;        // no se tocó
+                              if (raw === '') { updatePhrase(i, { font_size: null }); return; } // vacío = por defecto
+                              updatePhrase(i, { font_size: Math.max(8, Math.min(120, Number(raw))) });
+                            }}
+                            className="w-14 text-center rounded-lg border border-gray-200 px-2 py-1 text-xs"
+                          />
+                          <button
+                            type="button"
+                            title="Aumentar"
+                            onClick={() => { setSizeDraft((d) => { const n = { ...d }; delete n[i]; return n; }); bumpSize(i, 1); }}
+                            className="h-6 w-6 rounded border border-gray-200 text-gray-600 hover:bg-gray-100"
+                          >
+                            +
+                          </button>
+                          <span>px</span>
+                        </label>
                         <div className="ml-auto flex items-center gap-1">
                           <button onClick={() => movePhrase(i, -1)} disabled={i === 0} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Subir">↑</button>
                           <button onClick={() => movePhrase(i, 1)} disabled={i === hero.phrases.length - 1} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Bajar">↓</button>
@@ -321,62 +511,170 @@ export default function AdminHomePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-                <button onClick={saveHero} disabled={heroSaving}
-                  className="bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-60">
-                  {heroSaving ? 'Guardando…' : 'Guardar cambios'}
-                </button>
+              <div className="pt-2 border-t border-gray-100 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    className="flex-1 min-w-[160px] rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                    value={versionName}
+                    placeholder="Nombre de la versión (ej. Campaña San Valentín)"
+                    onChange={(e) => setVersionName(e.target.value)}
+                  />
+                  <button onClick={saveHero} disabled={heroSaving}
+                    className="bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-60">
+                    {heroSaving ? 'Guardando…' : 'Guardar como nueva versión'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Esto crea una nueva versión con el contenido de arriba y la pone en uso. Para cambiar a una
+                  versión ya existente, usa “Usar esta” en el historial (no hace falta guardar).
+                </p>
                 {heroMsg && <span className="text-xs text-emerald-600">{heroMsg}</span>}
                 {heroErr && <span className="text-xs text-rose-600">{heroErr}</span>}
               </div>
             </div>
 
-            {/* -------- Vista previa -------- */}
+            {/* -------- Vista previa / editor visual -------- */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-2">Vista previa</p>
-              <div className="relative rounded-2xl ring-1 ring-primary-100/60 overflow-hidden">
-                {hero.background.image_url && (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={hero.background.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black" style={{ opacity: hero.background.overlay }} />
-                  </>
-                )}
-                <div className={`relative p-6 flex flex-col-reverse sm:flex-row items-center gap-6 ${hero.background.image_url ? '' : 'bg-gradient-to-b from-primary-50 to-white'}`}>
-                  <div className="flex-1 text-center sm:text-left">
-                    {hero.phrases.map((p, i) =>
-                      p.type === 'title' ? (
-                        <h3 key={i} className="font-serif text-2xl font-semibold leading-tight"
-                          style={{ color: resolveHeroColor(p.color, hero.background.image_url ? '#fff' : '#450b3a') }}>
-                          {p.text || 'Título…'}
-                        </h3>
-                      ) : (
-                        <p key={i} className="mt-1 text-sm"
-                          style={{ color: resolveHeroColor(p.color, hero.background.image_url ? '#f3f4f6' : '#6b7280') }}>
-                          {p.text || 'Párrafo…'}
-                        </p>
-                      )
-                    )}
-                    <div className="mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
-                      {hero.buttons.map((b, i) => (
-                        <span key={i} className={`text-xs font-semibold px-4 py-2 rounded-full ${
-                          b.variant === 'primary' ? 'bg-primary-600 text-white' : 'bg-white text-primary-700 border border-primary-200'
-                        }`}>{b.label || 'Botón'}</span>
-                      ))}
-                    </div>
-                  </div>
-                  {hero.show_logo && (
-                    <div className="flex-1 flex justify-center">
-                      <div className="relative h-28 w-28">
-                        {hero.logo_url ? <Image src={hero.logo_url} alt="Logo" fill sizes="112px" className="object-contain" /> : null}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <HeroCanvas hero={hero} onChange={setHero} />
             </div>
           </div>
         )}
+
+        {/* -------- Versión principal (fijada) + base de versiones -------- */}
+        {!loading && (() => {
+          const pinned = history.find((v) => v.is_pinned) || null;
+          const rest = history.filter((v) => !v.is_pinned);
+          return (
+            <div className="mt-6 space-y-4">
+              {/* Versión principal fijada */}
+              {pinned && (
+                <div className="bg-white rounded-2xl border-2 border-amber-300 shadow-sm p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-500 text-white px-2 py-0.5 rounded-full">
+                      ★ Versión principal
+                    </span>
+                    {pinned.is_current && (
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                        · En uso
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex-1 min-w-[140px]">
+                      <span className="text-sm font-semibold text-gray-800">
+                        {pinned.name?.trim() || versionSummary(pinned.content)}
+                      </span>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Siempre disponible · no se puede eliminar · Creada el {fmtDate(pinned.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 ml-auto flex-wrap justify-end">
+                      <button
+                        onClick={() => restoreVersion(pinned)}
+                        disabled={pinned.is_current || historyBusy === pinned.id}
+                        className="text-xs font-semibold text-amber-800 border border-amber-300 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                      >
+                        {pinned.is_current ? 'En uso' : (historyBusy === pinned.id ? '…' : 'Usar la versión inicial')}
+                      </button>
+                      <button
+                        onClick={() => duplicateVersion(pinned)}
+                        disabled={historyBusy === pinned.id}
+                        className="text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                      >
+                        Duplicar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Base de versiones */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-semibold text-gray-700">Versiones guardadas</p>
+                  <span className="text-xs text-gray-400">{rest.length} versión(es)</span>
+                </div>
+                <p className="text-xs text-gray-400 mb-4">
+                  Tus versiones del cuerpo principal, en orden de creación. Pulsa “Usar esta” para aplicarla al
+                  instante (sin guardar). “Fijar como principal” la mueve arriba y la protege de borrado.
+                </p>
+                {rest.length === 0 ? (
+                  <p className="text-xs text-gray-400">
+                    No hay más versiones. Crea una con “Guardar como nueva versión”.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {rest.map((v, idx) => (
+                      <li
+                        key={v.id}
+                        className={`flex flex-wrap items-center gap-3 rounded-xl border p-3 ${
+                          v.is_current ? 'border-emerald-300 bg-emerald-50/60' : 'border-gray-100'
+                        }`}
+                      >
+                        <span className="text-xs font-bold text-gray-300 w-6 text-center">{idx + 1}</span>
+                        <div className="flex-1 min-w-[140px]">
+                          <span
+                            className={`text-sm font-medium ${
+                              v.is_current ? 'text-emerald-800 underline decoration-emerald-400 underline-offset-4' : 'text-gray-800'
+                            }`}
+                          >
+                            {v.name?.trim() || versionSummary(v.content)}
+                          </span>
+                          {v.is_current && (
+                            <span className="ml-2 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                              · En uso
+                            </span>
+                          )}
+                          <p className="text-xs text-gray-400 mt-0.5">Creada el {fmtDate(v.created_at)}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-auto flex-wrap justify-end">
+                          {!v.is_current && (
+                            <button
+                              onClick={() => restoreVersion(v)}
+                              disabled={historyBusy === v.id}
+                              className="text-xs font-semibold text-primary-700 border border-primary-200 hover:bg-primary-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                            >
+                              {historyBusy === v.id ? '…' : 'Usar esta'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => pinVersion(v)}
+                            disabled={historyBusy === v.id}
+                            className="text-xs font-semibold text-amber-700 border border-amber-200 hover:bg-amber-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                          >
+                            Fijar como principal
+                          </button>
+                          <button
+                            onClick={() => renameVersion(v)}
+                            disabled={historyBusy === v.id}
+                            className="text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                          >
+                            Renombrar
+                          </button>
+                          <button
+                            onClick={() => duplicateVersion(v)}
+                            disabled={historyBusy === v.id}
+                            className="text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
+                          >
+                            Duplicar
+                          </button>
+                          <button
+                            onClick={() => deleteVersion(v.id)}
+                            disabled={v.is_current || historyBusy === v.id}
+                            title={v.is_current ? 'No puedes eliminar la versión en uso' : 'Eliminar versión'}
+                            className="text-xs font-semibold text-rose-500 border border-rose-200 hover:bg-rose-50 px-3 py-1.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </section>
 
       {/* ===================== Portadas de categoría ===================== */}

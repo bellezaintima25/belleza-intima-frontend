@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminOrder, PaymentStatus, AdminProduct } from '@/lib/adminApi';
 import { formatPrice } from '@/lib/format';
@@ -19,6 +19,18 @@ function formatDate(iso: string): string {
 const PAYMENT_STATES: PaymentStatus[] = [
   'PENDIENTE', 'PAGADO', 'ENVIADO', 'ENTREGADO', 'CANCELADO',
 ];
+
+// Normaliza un pedido recibido del backend para que siempre tenga un
+// payment_status válido (por si un backend antiguo no envía el campo).
+function normalizeOrder(o: AdminOrder): AdminOrder {
+  const valid = PAYMENT_STATES.includes(o.payment_status as PaymentStatus);
+  return {
+    ...o,
+    payment_status: valid ? o.payment_status : 'PENDIENTE',
+    stock_applied: Boolean(o.stock_applied),
+    items: Array.isArray(o.items) ? o.items : [],
+  };
+}
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
   PENDIENTE: 'Pendiente',
@@ -73,9 +85,16 @@ export default function AdminOrdersPage() {
   const [custName, setCustName] = useState('');
   const [custPhone, setCustPhone] = useState('');
 
+  // --- Filtros ---
+  const [filterText, setFilterText] = useState('');            // cliente: nombre o teléfono
+  const [filterStatus, setFilterStatus] = useState<PaymentStatus | 'ALL'>('ALL');
+  const [filterFrom, setFilterFrom] = useState('');            // fecha desde (YYYY-MM-DD)
+  const [filterTo, setFilterTo] = useState('');                // fecha hasta (YYYY-MM-DD)
+  const [sortBy, setSortBy] = useState<'recent' | 'oldest' | 'total_desc' | 'total_asc'>('recent');
+
   useEffect(() => {
     adminApi.orders.list()
-      .then(setOrders)
+      .then((list) => setOrders(list.map(normalizeOrder)))
       .finally(() => setLoading(false));
     // Catálogo para el selector de "agregar producto".
     adminApi.products.list().then(setProducts).catch(() => {});
@@ -83,7 +102,7 @@ export default function AdminOrdersPage() {
 
   // Reemplaza un pedido en la lista con la versión devuelta por el backend.
   const replaceOrder = (updated: AdminOrder) =>
-    setOrders((prev) => prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
+    setOrders((prev) => prev.map((o) => (o.id === updated.id ? { ...o, ...normalizeOrder(updated) } : o)));
 
   const changeItemQty = async (order: AdminOrder, itemId: number, quantity: number) => {
     if (quantity < 1) return;
@@ -205,17 +224,139 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Pedidos tras aplicar filtros y orden.
+  const visibleOrders = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    const fromTs = filterFrom ? new Date(`${filterFrom}T00:00:00`).getTime() : null;
+    const toTs = filterTo ? new Date(`${filterTo}T23:59:59.999`).getTime() : null;
+    let list = orders.filter((o) => {
+      if (q) {
+        const hay = `${o.customer_name} ${o.customer_phone}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (filterStatus !== 'ALL' && o.payment_status !== filterStatus) return false;
+      const ts = new Date(o.created_at).getTime();
+      if (fromTs !== null && ts < fromTs) return false;
+      if (toTs !== null && ts > toTs) return false;
+      return true;
+    });
+    list = [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'total_desc':
+          return orderTotal(b) - orderTotal(a);
+        case 'total_asc':
+          return orderTotal(a) - orderTotal(b);
+        case 'recent':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return list;
+  }, [orders, filterText, filterStatus, filterFrom, filterTo, sortBy]);
+
+  const filtersActive =
+    filterText.trim() !== '' || filterStatus !== 'ALL' || filterFrom !== '' || filterTo !== '' || sortBy !== 'recent';
+
+  const clearFilters = () => {
+    setFilterText('');
+    setFilterStatus('ALL');
+    setFilterFrom('');
+    setFilterTo('');
+    setSortBy('recent');
+  };
+
   return (
     <div className="p-4 md:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-800">Pedidos</h1>
-        <p className="text-gray-400 text-sm mt-1">{orders.length} pedidos registrados</p>
+        <p className="text-gray-400 text-sm mt-1">
+          {filtersActive
+            ? `${visibleOrders.length} de ${orders.length} pedidos`
+            : `${orders.length} pedidos registrados`}
+        </p>
       </div>
 
       {error && (
         <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-600" aria-label="Cerrar aviso">✕</button>
+        </div>
+      )}
+
+      {/* Barra de filtros */}
+      {!loading && orders.length > 0 && (
+        <div className="mb-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex flex-wrap items-end gap-3">
+          <label className="flex flex-col text-xs text-gray-500 flex-1 min-w-[180px]">
+            Buscar cliente
+            <input
+              type="text"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              placeholder="Nombre o teléfono…"
+              className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
+            />
+          </label>
+
+          <label className="flex flex-col text-xs text-gray-500">
+            Estado
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as PaymentStatus | 'ALL')}
+              className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
+            >
+              <option value="ALL">Todos</option>
+              {PAYMENT_STATES.map((s) => (
+                <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col text-xs text-gray-500">
+            Desde
+            <input
+              type="date"
+              value={filterFrom}
+              max={filterTo || undefined}
+              onChange={(e) => setFilterFrom(e.target.value)}
+              className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
+            />
+          </label>
+
+          <label className="flex flex-col text-xs text-gray-500">
+            Hasta
+            <input
+              type="date"
+              value={filterTo}
+              min={filterFrom || undefined}
+              onChange={(e) => setFilterTo(e.target.value)}
+              className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
+            />
+          </label>
+
+          <label className="flex flex-col text-xs text-gray-500">
+            Ordenar
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
+            >
+              <option value="recent">Más recientes</option>
+              <option value="oldest">Más antiguos</option>
+              <option value="total_desc">Mayor total</option>
+              <option value="total_asc">Menor total</option>
+            </select>
+          </label>
+
+          {filtersActive && (
+            <button
+              onClick={clearFilters}
+              className="text-xs font-semibold text-primary-700 border border-primary-200 hover:bg-primary-50 px-3 py-2 rounded-lg"
+            >
+              Limpiar filtros
+            </button>
+          )}
         </div>
       )}
 
@@ -230,6 +371,17 @@ export default function AdminOrdersPage() {
           <span className="text-5xl block mb-3">📦</span>
           <p>Aún no hay pedidos.</p>
         </div>
+      ) : visibleOrders.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <span className="text-4xl block mb-3">🔍</span>
+          <p>Ningún pedido coincide con los filtros.</p>
+          <button
+            onClick={clearFilters}
+            className="mt-3 text-xs font-semibold text-primary-700 border border-primary-200 hover:bg-primary-50 px-3 py-2 rounded-lg"
+          >
+            Limpiar filtros
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
           {/* Encabezado de columnas (solo en pantallas grandes) */}
@@ -241,7 +393,7 @@ export default function AdminOrdersPage() {
             <div className="col-span-3">Estado</div>
           </div>
 
-          {orders.map((order) => (
+          {visibleOrders.map((order) => (
             <div key={order.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               {/* Fila principal — clic en cualquier parte despliega el detalle */}
               <div

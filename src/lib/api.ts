@@ -71,12 +71,22 @@ export interface HeroPhrase {
   text: string;
   type: 'title' | 'paragraph';
   color: string;
+  align?: 'left' | 'center' | 'right';
+  font_size?: number | null;
+  layout?: HeroItemLayout | null;
+}
+
+export interface HeroItemLayout {
+  x: number;
+  y: number;
+  rotation: number;
 }
 
 export interface HeroButton {
   label: string;
   href: string;
   variant: 'primary' | 'secondary';
+  layout?: HeroItemLayout | null;
 }
 
 export interface HeroBackground {
@@ -90,6 +100,9 @@ export interface HeroContent {
   background: HeroBackground;
   show_logo: boolean;
   logo_url: string;
+  layout?: 'flow' | 'free';
+  buttons_layout?: HeroItemLayout | null;
+  logo_layout?: HeroItemLayout | null;
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {

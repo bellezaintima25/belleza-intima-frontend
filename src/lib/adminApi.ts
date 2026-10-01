@@ -31,16 +31,26 @@ export interface CategoryCoverOut {
   image_url: string;
 }
 
+export interface HeroItemLayout {
+  x: number;
+  y: number;
+  rotation: number;
+}
+
 export interface HeroPhrase {
   text: string;
   type: 'title' | 'paragraph';
   color: string;
+  align?: 'left' | 'center' | 'right';
+  font_size?: number | null;
+  layout?: HeroItemLayout | null;
 }
 
 export interface HeroButton {
   label: string;
   href: string;
   variant: 'primary' | 'secondary';
+  layout?: HeroItemLayout | null;
 }
 
 export interface HeroBackground {
@@ -54,6 +64,18 @@ export interface HeroContent {
   background: HeroBackground;
   show_logo: boolean;
   logo_url: string;
+  layout?: 'flow' | 'free';
+  buttons_layout?: HeroItemLayout | null;
+  logo_layout?: HeroItemLayout | null;
+}
+
+export interface HeroVersion {
+  id: number;
+  name: string | null;
+  content: HeroContent;
+  is_current: boolean;
+  is_pinned: boolean;
+  created_at: string;
 }
 
 export interface AdminProduct {
@@ -197,12 +219,30 @@ export const adminApi = {
 
   site: {
     getHero: () => req<HeroContent>('/site/hero'),
-    updateHero: (data: HeroContent) =>
-      req<HeroContent>('/site/hero', { method: 'PUT', body: JSON.stringify(data) }),
+    updateHero: (data: HeroContent, name?: string) =>
+      req<HeroContent>('/site/hero', {
+        method: 'PUT',
+        body: JSON.stringify({ content: data, name: name ?? null }),
+      }),
     uploadLogo: (file: File) => {
       const form = new FormData();
       form.append('file', file);
       return req<ImageOut>('/site/hero/logo/upload', { method: 'POST', body: form });
     },
+    // Historial de versiones del hero
+    history: () => req<HeroVersion[]>('/site/hero/history'),
+    restoreVersion: (versionId: number) =>
+      req<HeroContent>(`/site/hero/history/${versionId}/restore`, { method: 'POST' }),
+    deleteVersion: (versionId: number) =>
+      req<void>(`/site/hero/history/${versionId}`, { method: 'DELETE' }),
+    renameVersion: (versionId: number, name: string) =>
+      req<HeroVersion>(`/site/hero/history/${versionId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name }),
+      }),
+    duplicateVersion: (versionId: number) =>
+      req<HeroVersion>(`/site/hero/history/${versionId}/duplicate`, { method: 'POST' }),
+    pinVersion: (versionId: number) =>
+      req<HeroVersion>(`/site/hero/history/${versionId}/pin`, { method: 'POST' }),
   },
 };
