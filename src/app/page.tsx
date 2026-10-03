@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import type { Product, HeroContent } from '@/lib/api';
-import { resolveHeroColor } from '@/lib/heroPalette';
+import HeroFreeView from '@/components/HeroFreeView';
+import HeroFlowView from '@/components/HeroFlowView';
 import ProductCard from '@/components/ProductCard';
 import TopBar from '@/components/TopBar';
 import CategoryCarousel from '@/components/CategoryCarousel';
@@ -102,151 +103,17 @@ export default function HomePage() {
             )}
 
             {hero.layout === 'free' ? (
-              /* ---- Modo libre: posiciones absolutas, rotación y alineación ---- */
-              <div className="relative w-full" style={{ aspectRatio: '16 / 7', minHeight: 280 }}>
-                {hero.phrases.map((p, i) => {
-                  const l = p.layout ?? { x: 35, y: 30 + i * 12, rotation: 0 };
-                  const style: React.CSSProperties = {
-                    position: 'absolute',
-                    left: `${l.x}%`,
-                    top: `${l.y}%`,
-                    transform: `translate(-50%, -50%) rotate(${l.rotation}deg)`,
-                    textAlign: p.align ?? 'left',
-                    maxWidth: '70%',
-                  };
-                  return p.type === 'title' ? (
-                    <h1
-                      key={i}
-                      style={{ ...style, color: resolveHeroColor(p.color, hero.background.image_url ? '#ffffff' : '#450b3a'), fontSize: p.font_size ? `${p.font_size}px` : undefined }}
-                      className="font-serif text-3xl sm:text-5xl font-semibold leading-tight"
-                    >
-                      {p.text}
-                    </h1>
-                  ) : (
-                    <p
-                      key={i}
-                      style={{ ...style, color: resolveHeroColor(p.color, hero.background.image_url ? '#f3f4f6' : '#6b7280'), fontSize: p.font_size ? `${p.font_size}px` : undefined }}
-                      className="text-base sm:text-lg"
-                    >
-                      {p.text}
-                    </p>
-                  );
-                })}
-
-                {hero.buttons.length > 0 && hero.buttons.map((b, i) => {
-                  const l = b.layout ?? { x: 30 + i * 18, y: 72, rotation: 0 };
-                  return (
-                    <div
-                      key={`fb-${i}`}
-                      className="absolute"
-                      style={{
-                        left: `${l.x}%`,
-                        top: `${l.y}%`,
-                        transform: `translate(-50%, -50%) rotate(${l.rotation}deg)`,
-                      }}
-                    >
-                      <Link
-                        href={b.href}
-                        className={
-                          b.variant === 'primary'
-                            ? 'bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-full transition-colors'
-                            : 'bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 font-semibold px-8 py-3 rounded-full transition-colors'
-                        }
-                      >
-                        {b.label}
-                      </Link>
-                    </div>
-                  );
-                })}
-
-                {hero.show_logo && (() => {
-                  const l = hero.logo_layout ?? { x: 80, y: 45, rotation: 0 };
-                  return (
-                    <div
-                      className="absolute"
-                      style={{
-                        left: `${l.x}%`,
-                        top: `${l.y}%`,
-                        transform: `translate(-50%, -50%) rotate(${l.rotation}deg)`,
-                      }}
-                    >
-                      <Image
-                        src={hero.logo_url}
-                        alt="Belleza Íntima"
-                        width={420}
-                        height={420}
-                        priority
-                        className="w-40 sm:w-56 md:w-72 h-auto"
-                      />
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : (
-            <div className={`relative px-8 py-10 sm:px-16 sm:py-14 flex flex-col-reverse md:flex-row items-center gap-10 md:gap-16 ${
-              hero.background.image_url ? 'text-white' : ''
-            }`}>
-              {/* Left: frases + botones dinámicos */}
-              <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
-                {hero.phrases.map((p, i) =>
-                  p.type === 'title' ? (
-                    <h1
-                      key={i}
-                      className="font-serif text-4xl sm:text-5xl font-semibold leading-tight max-w-2xl"
-                      style={{ color: resolveHeroColor(p.color, hero.background.image_url ? '#ffffff' : '#450b3a'), textAlign: p.align ?? undefined, fontSize: p.font_size ? `${p.font_size}px` : undefined }}
-                    >
-                      {p.text}
-                    </h1>
-                  ) : (
-                    <p
-                      key={i}
-                      className="mt-4 max-w-lg"
-                      style={{ color: resolveHeroColor(p.color, hero.background.image_url ? '#f3f4f6' : '#6b7280'), textAlign: p.align ?? undefined, fontSize: p.font_size ? `${p.font_size}px` : undefined }}
-                    >
-                      {p.text}
-                    </p>
-                  )
-                )}
-
-                {hero.buttons.length > 0 && (
-                  <div className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
-                    {hero.buttons.map((b, i) =>
-                      b.variant === 'primary' ? (
-                        <Link
-                          key={i}
-                          href={b.href}
-                          className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-full transition-colors"
-                        >
-                          {b.label}
-                        </Link>
-                      ) : (
-                        <Link
-                          key={i}
-                          href={b.href}
-                          className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 font-semibold px-8 py-3 rounded-full transition-colors"
-                        >
-                          {b.label}
-                        </Link>
-                      )
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right: logo (ocultable) */}
-              {hero.show_logo && (
-                <div className="flex-1 flex justify-center md:justify-end">
-                  <Image
-                    src={hero.logo_url}
-                    alt="Belleza Íntima"
-                    width={420}
-                    height={420}
-                    priority
-                    className="w-56 sm:w-72 md:w-full max-w-sm h-auto"
-                  />
+              /* ---- Modo libre: lienzo escalado en escritorio, clásico apilado en móvil ---- */
+              <>
+                <div className="hidden md:block">
+                  <HeroFreeView hero={hero} device="desktop" />
                 </div>
-              )}
-            </div>
+                <div className="md:hidden">
+                  <HeroFreeView hero={hero} device="mobile" />
+                </div>
+              </>
+            ) : (
+              <HeroFlowView hero={hero} />
             )}
           </div>
         </div>

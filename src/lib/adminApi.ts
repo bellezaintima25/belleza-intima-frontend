@@ -43,7 +43,11 @@ export interface HeroPhrase {
   color: string;
   align?: 'left' | 'center' | 'right';
   font_size?: number | null;
+  font_size_mobile?: number | null;
+  box_width?: number | null;
+  box_width_mobile?: number | null;
   layout?: HeroItemLayout | null;
+  layout_mobile?: HeroItemLayout | null;
 }
 
 export interface HeroButton {
@@ -51,11 +55,14 @@ export interface HeroButton {
   href: string;
   variant: 'primary' | 'secondary';
   layout?: HeroItemLayout | null;
+  layout_mobile?: HeroItemLayout | null;
 }
 
 export interface HeroBackground {
   image_url: string;
   overlay: number;
+  image_url_mobile?: string;
+  overlay_mobile?: number;
 }
 
 export interface HeroContent {
@@ -67,6 +74,9 @@ export interface HeroContent {
   layout?: 'flow' | 'free';
   buttons_layout?: HeroItemLayout | null;
   logo_layout?: HeroItemLayout | null;
+  logo_layout_mobile?: HeroItemLayout | null;
+  logo_size?: number | null;
+  logo_size_mobile?: number | null;
 }
 
 export interface HeroVersion {
@@ -219,6 +229,7 @@ export const adminApi = {
 
   site: {
     getHero: () => req<HeroContent>('/site/hero'),
+    getDefault: () => req<HeroContent>('/site/hero/default'),
     updateHero: (data: HeroContent, name?: string) =>
       req<HeroContent>('/site/hero', {
         method: 'PUT',

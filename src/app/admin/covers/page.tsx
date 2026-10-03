@@ -7,6 +7,7 @@ import type { HeroContent, HeroPhrase, HeroButton, HeroVersion } from '@/lib/adm
 import { HERO_PALETTE } from '@/lib/heroPalette';
 import { categoryLabel } from '@/lib/format';
 import HeroCanvas from '@/components/admin/HeroCanvas';
+import HeroFreeView from '@/components/HeroFreeView';
 
 const CATEGORY_KEYS = ['SET', 'CORSET', 'BODY', 'PIJAMA'];
 
@@ -30,14 +31,17 @@ export default function AdminHomePage() {
   const [heroSaving, setHeroSaving] = useState(false);
   const [heroMsg, setHeroMsg] = useState<string | null>(null);
   const [heroErr, setHeroErr] = useState<string | null>(null);
+  // Dispositivo que se está editando en el editor visual (modo libre).
+  const [editDevice, setEditDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [history, setHistory] = useState<HeroVersion[]>([]);
   const [historyBusy, setHistoryBusy] = useState<number | null>(null);
   const [versionName, setVersionName] = useState('');
   // Texto en edición de los inputs de tamaño (clave = índice de frase).
   // Permite escribir/borrar libremente; el valor se valida al salir del campo.
-  const [sizeDraft, setSizeDraft] = useState<Record<number, string>>({});
+  const [sizeDraft, setSizeDraft] = useState<Record<string, string>>({});
   const logoInput = useRef<HTMLInputElement | null>(null);
   const bgInput = useRef<HTMLInputElement | null>(null);
+  const bgMobileInput = useRef<HTMLInputElement | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -77,13 +81,16 @@ export default function AdminHomePage() {
   const updatePhrase = (i: number, patch: Partial<HeroPhrase>) =>
     setHero((h) => ({ ...h, phrases: h.phrases.map((p, idx) => (idx === i ? { ...p, ...patch } : p)) }));
   // Sube/baja el tamaño de la frase i en `delta` px desde el valor actual (rango 8–120).
+  // Escribe en el campo del dispositivo activo (escritorio o móvil).
   const bumpSize = (i: number, delta: number) =>
     setHero((h) => ({
       ...h,
       phrases: h.phrases.map((p, idx) => {
         if (idx !== i) return p;
-        const base = p.font_size ?? (p.type === 'title' ? 32 : 14);
-        return { ...p, font_size: Math.max(8, Math.min(120, base + delta)) };
+        const def = p.type === 'title' ? 32 : 14;
+        const field = editDevice === 'mobile' ? 'font_size_mobile' : 'font_size';
+        const base = (editDevice === 'mobile' ? (p.font_size_mobile ?? p.font_size) : p.font_size) ?? def;
+        return { ...p, [field]: Math.max(8, Math.min(120, base + delta)) };
       }),
     }));
   const removePhrase = (i: number) =>
@@ -123,6 +130,19 @@ export default function AdminHomePage() {
       setHeroErr(e instanceof Error ? e.message : 'No se pudieron guardar los cambios.');
     } finally {
       setHeroSaving(false);
+    }
+  };
+
+  // Carga el hero predeterminado (diseño original) en el editor, SIN guardar.
+  const loadDefaultHero = async () => {
+    setHeroErr(null);
+    setHeroMsg(null);
+    try {
+      const def = await adminApi.site.getDefault();
+      setHero(def);
+      setHeroMsg('Hero predeterminado cargado. Revisa y pulsa “Guardar como nueva versión” para aplicarlo.');
+    } catch (e) {
+      setHeroErr(e instanceof Error ? e.message : 'No se pudo cargar el hero predeterminado.');
     }
   };
 
@@ -211,13 +231,14 @@ export default function AdminHomePage() {
     }
   };
 
-  const uploadImage = async (file: File, target: 'logo' | 'bg') => {
+  const uploadImage = async (file: File, target: 'logo' | 'bg' | 'bg_mobile') => {
     setHeroErr(null);
     setHeroSaving(true);
     try {
       const uploaded = await adminApi.site.uploadLogo(file);
       if (target === 'logo') setHero((h) => ({ ...h, logo_url: uploaded.url }));
-      else setHero((h) => ({ ...h, background: { ...h.background, image_url: uploaded.url } }));
+      else if (target === 'bg') setHero((h) => ({ ...h, background: { ...h.background, image_url: uploaded.url } }));
+      else setHero((h) => ({ ...h, background: { ...h.background, image_url_mobile: uploaded.url } }));
       setHeroMsg('Imagen subida. Recuerda guardar los cambios.');
     } catch (e) {
       setHeroErr(e instanceof Error ? e.message : 'No se pudo subir la imagen.');
@@ -362,9 +383,9 @@ export default function AdminHomePage() {
                             </button>
                           ))}
                         </div>
-                        {/* Tamaño del texto (px) */}
-                        <label className="flex items-center gap-1 text-xs text-gray-500" title="Tamaño del texto en píxeles">
-                          <span>Tamaño</span>
+                        {/* Tamaño del texto (px) — por dispositivo en modo libre */}
+                        <label className="flex items-center gap-1 text-xs text-gray-500" title="Tamaño del texto en píxeles (por dispositivo)">
+                          <span>Tamaño{hero.layout === 'free' ? (editDevice === 'mobile' ? ' 📱' : ' 🖥️') : ''}</span>
                           <button
                             type="button"
                             title="Reducir"
@@ -376,21 +397,27 @@ export default function AdminHomePage() {
                           <input
                             type="text"
                             inputMode="numeric"
-                            value={sizeDraft[i] ?? String(p.font_size ?? (p.type === 'title' ? 32 : 14))}
+                            value={(() => {
+                              const dk = `${editDevice}-${i}`;
+                              const def = p.type === 'title' ? 32 : 14;
+                              const effective = editDevice === 'mobile' ? (p.font_size_mobile ?? p.font_size ?? def) : (p.font_size ?? def);
+                              return sizeDraft[dk] ?? String(effective);
+                            })()}
                             onChange={(e) => {
-                              // Deja escribir/borrar libremente: solo dígitos (o vacío).
+                              const dk = `${editDevice}-${i}`;
+                              const field = editDevice === 'mobile' ? 'font_size_mobile' : 'font_size';
                               const raw = e.target.value.replace(/[^0-9]/g, '');
-                              setSizeDraft((d) => ({ ...d, [i]: raw }));
-                              // Previsualiza en vivo si ya hay un número (sin forzar el rango aquí).
-                              if (raw !== '') updatePhrase(i, { font_size: Number(raw) });
+                              setSizeDraft((d) => ({ ...d, [dk]: raw }));
+                              if (raw !== '') updatePhrase(i, { [field]: Number(raw) } as Partial<HeroPhrase>);
                             }}
                             onBlur={() => {
-                              // Al salir: validar el rango y aplicar; limpiar el borrador.
-                              const raw = sizeDraft[i];
-                              setSizeDraft((d) => { const n = { ...d }; delete n[i]; return n; });
-                              if (raw === undefined) return;        // no se tocó
-                              if (raw === '') { updatePhrase(i, { font_size: null }); return; } // vacío = por defecto
-                              updatePhrase(i, { font_size: Math.max(8, Math.min(120, Number(raw))) });
+                              const dk = `${editDevice}-${i}`;
+                              const field = editDevice === 'mobile' ? 'font_size_mobile' : 'font_size';
+                              const raw = sizeDraft[dk];
+                              setSizeDraft((d) => { const n = { ...d }; delete n[dk]; return n; });
+                              if (raw === undefined) return;
+                              if (raw === '') { updatePhrase(i, { [field]: null } as Partial<HeroPhrase>); return; }
+                              updatePhrase(i, { [field]: Math.max(8, Math.min(120, Number(raw))) } as Partial<HeroPhrase>);
                             }}
                             className="w-14 text-center rounded-lg border border-gray-200 px-2 py-1 text-xs"
                           />
@@ -404,6 +431,26 @@ export default function AdminHomePage() {
                           </button>
                           <span>px</span>
                         </label>
+                        {/* Ancho del recuadro de texto (solo en modo libre) */}
+                        {hero.layout === 'free' && (() => {
+                          const field = editDevice === 'mobile' ? 'box_width_mobile' : 'box_width';
+                          const current = (editDevice === 'mobile' ? (p.box_width_mobile ?? p.box_width) : p.box_width) ?? 80;
+                          return (
+                            <label className="flex items-center gap-1 text-xs text-gray-500" title="Ancho del recuadro de texto (% del lienzo)">
+                              <span>Ancho</span>
+                              <input
+                                type="range"
+                                min={10}
+                                max={100}
+                                step={1}
+                                value={current}
+                                onChange={(e) => updatePhrase(i, { [field]: Number(e.target.value) } as Partial<HeroPhrase>)}
+                                className="w-24"
+                              />
+                              <span className="w-8 text-right">{Math.round(current)}%</span>
+                            </label>
+                          );
+                        })()}
                         <div className="ml-auto flex items-center gap-1">
                           <button onClick={() => movePhrase(i, -1)} disabled={i === 0} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Subir">↑</button>
                           <button onClick={() => movePhrase(i, 1)} disabled={i === hero.phrases.length - 1} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Bajar">↓</button>
@@ -455,10 +502,12 @@ export default function AdminHomePage() {
                   )}
                 </div>
               </div>
-
-              {/* Imagen de fondo */}
+              {/* Imagen de fondo (escritorio y móvil por separado) */}
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-2">Imagen de fondo</p>
+
+                {/* Fondo escritorio */}
+                <p className="text-[11px] font-semibold text-gray-400 mb-1">🖥️ Fondo escritorio</p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <input ref={bgInput} type="file" accept="image/*" className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'bg'); e.target.value=''; }} />
@@ -472,14 +521,41 @@ export default function AdminHomePage() {
                     onChange={(e) => setHero((h) => ({ ...h, background: { ...h.background, image_url: e.target.value } }))} />
                   {hero.background.image_url && (
                     <button onClick={() => setHero((h) => ({ ...h, background: { ...h.background, image_url: '' } }))}
-                      className="text-xs text-rose-500">Quitar fondo</button>
+                      className="text-xs text-rose-500">Quitar</button>
                   )}
                 </div>
                 {hero.background.image_url && (
                   <label className="block text-xs text-gray-500 mt-2">
-                    Oscurecido ({Math.round(hero.background.overlay * 100)}%)
+                    Oscurecido escritorio ({Math.round(hero.background.overlay * 100)}%)
                     <input type="range" min={0} max={1} step={0.05} value={hero.background.overlay}
                       onChange={(e) => setHero((h) => ({ ...h, background: { ...h.background, overlay: Number(e.target.value) } }))}
+                      className="w-full" />
+                  </label>
+                )}
+
+                {/* Fondo móvil */}
+                <p className="text-[11px] font-semibold text-gray-400 mb-1 mt-4">📱 Fondo móvil (opcional; si está vacío usa el de escritorio)</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <input ref={bgMobileInput} type="file" accept="image/*" className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'bg_mobile'); e.target.value=''; }} />
+                  <button onClick={() => bgMobileInput.current?.click()} disabled={heroSaving}
+                    className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-60">
+                    Subir fondo móvil
+                  </button>
+                  <input className="flex-1 min-w-[160px] rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-500"
+                    value={hero.background.image_url_mobile ?? ''}
+                    placeholder="URL de la imagen o vacío"
+                    onChange={(e) => setHero((h) => ({ ...h, background: { ...h.background, image_url_mobile: e.target.value } }))} />
+                  {hero.background.image_url_mobile && (
+                    <button onClick={() => setHero((h) => ({ ...h, background: { ...h.background, image_url_mobile: '' } }))}
+                      className="text-xs text-rose-500">Quitar</button>
+                  )}
+                </div>
+                {hero.background.image_url_mobile && (
+                  <label className="block text-xs text-gray-500 mt-2">
+                    Oscurecido móvil ({Math.round((hero.background.overlay_mobile ?? 0.35) * 100)}%)
+                    <input type="range" min={0} max={1} step={0.05} value={hero.background.overlay_mobile ?? 0.35}
+                      onChange={(e) => setHero((h) => ({ ...h, background: { ...h.background, overlay_mobile: Number(e.target.value) } }))}
                       className="w-full" />
                   </label>
                 )}
@@ -509,6 +585,19 @@ export default function AdminHomePage() {
                     value={hero.logo_url}
                     onChange={(e) => setHero((h) => ({ ...h, logo_url: e.target.value }))} placeholder="/logo.svg o URL" />
                 </div>
+                {/* Tamaño del logo (respaldo del arrastre), por dispositivo en modo libre */}
+                {hero.show_logo && hero.layout === 'free' && (() => {
+                  const field = editDevice === 'mobile' ? 'logo_size_mobile' : 'logo_size';
+                  const current = (editDevice === 'mobile' ? (hero.logo_size_mobile ?? hero.logo_size) : hero.logo_size) ?? (editDevice === 'mobile' ? 130 : 180);
+                  return (
+                    <label className="block text-xs text-gray-500 mt-2">
+                      Tamaño del logo ({editDevice === 'mobile' ? 'móvil' : 'escritorio'}): {Math.round(current)}px
+                      <input type="range" min={40} max={editDevice === 'mobile' ? 440 : 1000} step={2} value={current}
+                        onChange={(e) => setHero((h) => ({ ...h, [field]: Number(e.target.value) }))}
+                        className="w-full" />
+                    </label>
+                  );
+                })()}
               </div>
 
               <div className="pt-2 border-t border-gray-100 space-y-2">
@@ -523,6 +612,12 @@ export default function AdminHomePage() {
                     className="bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-60">
                     {heroSaving ? 'Guardando…' : 'Guardar como nueva versión'}
                   </button>
+                  <button onClick={loadDefaultHero} disabled={heroSaving}
+                    type="button"
+                    title="Carga el diseño original de la página (sin guardar). Útil cuando no hay campaña de temporada."
+                    className="bg-white hover:bg-primary-50 text-primary-700 border border-primary-200 text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-60">
+                    Cargar hero predeterminado
+                  </button>
                 </div>
                 <p className="text-xs text-gray-400">
                   Esto crea una nueva versión con el contenido de arriba y la pone en uso. Para cambiar a una
@@ -535,7 +630,66 @@ export default function AdminHomePage() {
 
             {/* -------- Vista previa / editor visual -------- */}
             <div>
-              <HeroCanvas hero={hero} onChange={setHero} />
+              {/* Activar/desactivar el modo de posición libre */}
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer mb-2 bg-primary-50/60 border border-primary-100 rounded-lg px-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={hero.layout === 'free'}
+                  onChange={(e) => setHero((h) => ({ ...h, layout: e.target.checked ? 'free' : 'flow' }))}
+                />
+                <span className="font-semibold">Posición libre</span>
+                <span className="text-gray-400">— arrastra y rota los elementos; si está apagado, se usa el diseño clásico apilado.</span>
+              </label>
+
+              {/* Conmutador de dispositivo (solo en modo libre) */}
+              {hero.layout === 'free' && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-semibold text-gray-500">Editando:</span>
+                  <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setEditDevice('desktop')}
+                      className={`text-xs font-semibold px-3 py-1 rounded ${editDevice === 'desktop' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                    >
+                      🖥️ Escritorio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditDevice('mobile')}
+                      className={`text-xs font-semibold px-3 py-1 rounded ${editDevice === 'mobile' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                    >
+                      📱 Móvil
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <HeroCanvas hero={hero} onChange={setHero} device={editDevice} />
+
+              {/* Doble previsualización (solo en modo libre): tal cual se verá publicado */}
+              {hero.layout === 'free' && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">
+                    Cómo se verá publicado · cada dispositivo con su propio diseño
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-start">
+                    {/* Escritorio */}
+                    <div>
+                      <p className="text-[11px] text-gray-400 mb-1">🖥️ Escritorio</p>
+                      <div className="rounded-xl ring-1 ring-primary-100/60 overflow-hidden">
+                        <HeroFreeView hero={hero} device="desktop" interactive />
+                      </div>
+                    </div>
+                    {/* Móvil */}
+                    <div>
+                      <p className="text-[11px] text-gray-400 mb-1">📱 Móvil</p>
+                      <div className="w-[240px] rounded-xl ring-1 ring-primary-100/60 overflow-hidden bg-white">
+                        <HeroFreeView hero={hero} device="mobile" interactive />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
