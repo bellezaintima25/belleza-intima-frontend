@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import type { Product, ProductVariant } from '@/lib/api';
+import { effectivePrice } from '@/lib/api';
 
 export interface CartItem {
   product: Product;
@@ -93,7 +94,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     openCart: () => dispatch({ type: 'OPEN' }),
     closeCart: () => dispatch({ type: 'CLOSE' }),
     total: state.items.reduce((sum, i) => {
-      const price = i.variant.price ?? i.product.base_price;
+      const price = effectivePrice(i.product, i.variant);
       return sum + price * i.quantity;
     }, 0),
     itemCount: state.items.reduce((sum, i) => sum + i.quantity, 0),

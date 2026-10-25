@@ -34,6 +34,11 @@ export default function ProductCard({ product, priority = false }: Props) {
     >
       {/* Image */}
       <div className="aspect-[3/4] relative bg-gradient-to-br from-primary-50 to-primary-100">
+        {product.on_sale && (
+          <span className="absolute top-2 left-2 z-10 bg-primary-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+            -{Math.round(product.discount_percent)}%
+          </span>
+        )}
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -72,7 +77,14 @@ export default function ProductCard({ product, priority = false }: Props) {
         <h3 className="font-serif text-lg text-gray-800 group-hover:text-primary-700 transition-colors leading-tight">
           {product.name}
         </h3>
-        <p className="mt-1 text-primary-600 font-bold nums">{formatPrice(product.base_price)}</p>
+        {product.on_sale ? (
+          <p className="mt-1 flex items-baseline gap-2">
+            <span className="text-primary-600 font-bold nums">{formatPrice(product.final_price)}</span>
+            <span className="text-xs text-gray-400 line-through nums">{formatPrice(product.base_price)}</span>
+          </p>
+        ) : (
+          <p className="mt-1 text-primary-600 font-bold nums">{formatPrice(product.base_price)}</p>
+        )}
       </div>
     </Link>
   );

@@ -410,7 +410,17 @@ export default function AdminOrdersPage() {
               >
                 {/* Cliente */}
                 <div className="col-span-2 lg:col-span-3 min-w-0">
-                  <p className="font-semibold text-gray-800 truncate">{order.customer_name}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-semibold text-gray-800 truncate">{order.customer_name}</p>
+                    {order.combo_id && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full"
+                        title={order.combo_name ? `Combo: ${order.combo_name}` : 'Pedido de combo'}
+                      >
+                        🎁 Combo
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400">{order.customer_phone}</p>
                 </div>
 
@@ -650,6 +660,11 @@ export default function AdminOrdersPage() {
                         </p>
                       )}
                     </div>
+                  )}
+                  {order.combo_id && (
+                    <p className="text-xs text-primary-700 mt-3">
+                      🎁 Pedido generado desde el combo{order.combo_name ? `: ${order.combo_name}` : ''}.
+                    </p>
                   )}
                   {order.sent_at && (
                     <p className="text-xs text-gray-400 mt-3">Enviado a WhatsApp: {formatDate(order.sent_at)}</p>

@@ -35,6 +35,7 @@ const DEFAULT_HERO: HeroContent = {
 
 export default function HomePage() {
   const [featured, setFeatured] = useState<Product[]>([]);
+  const [specials, setSpecials] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [hero, setHero] = useState<HeroContent>(DEFAULT_HERO);
@@ -75,6 +76,13 @@ export default function HomePage() {
       })
       .catch(() => null)
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    // Productos en descuento para la sección "Encantos especiales".
+    api.products.onSale()
+      .then((p) => setSpecials(p.slice(0, 4)))
+      .catch(() => null);
   }, []);
 
   return (
@@ -140,7 +148,7 @@ export default function HomePage() {
           </Link>
         </div>
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
                 <div className="aspect-[3/4] bg-gray-200" />
@@ -152,13 +160,30 @@ export default function HomePage() {
             ))}
           </div>
         ) : featured.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {featured.map((p, i) => (
               <ProductCard key={p.id} product={p} priority={i < 4} />
             ))}
           </div>
         ) : null}
       </section>
+
+      {/* Encantos especiales (productos en descuento) — solo si hay */}
+      {specials.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 pb-16">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-serif text-2xl font-semibold text-primary-700">Encantos especiales</h2>
+            <Link href="/especiales" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
+              Ver todo →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {specials.map((p, i) => (
+              <ProductCard key={p.id} product={p} priority={i < 4} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Brand teaser */}
       <section className="bg-primary-50">

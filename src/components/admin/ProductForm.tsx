@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatPrice } from '@/lib/format';
 
 const CATEGORIES = ['SET', 'BODY', 'CORSET', 'PANTY', 'PIJAMA'];
 
@@ -12,6 +13,8 @@ interface ProductFormData {
   category: string;
   base_price: number;
   featured: boolean;
+  discount_percent: number;
+  discount_active: boolean;
 }
 
 // The `initial` prop can be any object that carries these fields
@@ -24,6 +27,8 @@ interface ProductFormInitial {
   category?: string;
   base_price?: number;
   featured?: boolean;
+  discount_percent?: number;
+  discount_active?: boolean;
 }
 
 interface Props {
@@ -41,6 +46,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
     category: initial?.category ?? 'SET',
     base_price: initial?.base_price ?? 0,
     featured: initial?.featured ?? false,
+    discount_percent: initial?.discount_percent ?? 0,
+    discount_active: initial?.discount_active ?? false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +62,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
       await onSubmit({
         ...form,
         base_price: Number(form.base_price),
+        discount_percent: Number(form.discount_percent) || 0,
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
@@ -129,6 +137,59 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
           Destacado — aparece en “Los productos más amados”
         </span>
       </label>
+
+      {/* Descuento (porcentaje) */}
+      <div className="rounded-xl border border-gray-100 p-4 space-y-3">
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={form.discount_active}
+            onChange={(e) => setForm((p) => ({ ...p, discount_active: e.target.checked }))}
+            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-400"
+          />
+          <span className="text-sm font-medium text-gray-700">
+            En descuento — aparece en “Especiales”
+          </span>
+        </label>
+
+        {form.discount_active && (
+          <>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Porcentaje de descuento</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={form.discount_percent}
+                onChange={(e) => setForm((p) => ({ ...p, discount_percent: Number(e.target.value) }))}
+                className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-400"
+              />
+              <span className="text-sm text-gray-500">%</span>
+            </div>
+
+            {/* Vista previa del precio */}
+            {(() => {
+              const base = Number(form.base_price) || 0;
+              const pct = Math.min(100, Math.max(0, Number(form.discount_percent) || 0));
+              const final = Math.round(base * (1 - pct / 100));
+              return (
+                <p className="text-sm">
+                  {pct > 0 ? (
+                    <>
+                      <span className="text-gray-400 line-through mr-2">{formatPrice(base)}</span>
+                      <span className="font-semibold text-primary-700">{formatPrice(final)}</span>
+                      <span className="ml-2 text-emerald-600 font-semibold">-{pct}%</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-400">Escribe un porcentaje mayor que 0 para aplicar el descuento.</span>
+                  )}
+                </p>
+              );
+            })()}
+          </>
+        )}
+      </div>
 
       {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 

@@ -12,6 +12,12 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
       },
+      // Backend local (desarrollo): sirve /images subidas desde IMAGES_DIR
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+      },
     ],
   },
 };

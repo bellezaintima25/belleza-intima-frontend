@@ -19,7 +19,8 @@ import { HeartIcon } from '@heroicons/react/24/outline';
 const mainLinks = [
   { href: '/', label: 'INICIO' },
   { href: '/catalogo', label: 'CATÁLOGO', hasDropdown: true },
-  { href: '/catalogo?category=COMBO', label: 'COMBOS' },
+  { href: '/combos', label: 'COMBOS' },
+  { href: '/especiales', label: 'ESPECIALES' },
   { href: '/nuestra-marca', label: 'NUESTRA MARCA' },
 ];
 
@@ -151,7 +152,7 @@ export default function Navbar() {
                 onChange={(e) => setQuery(e.target.value)}
                 onBlur={() => !query && setSearchOpen(false)}
                 placeholder="Buscar..."
-                className="w-36 sm:w-52 pl-9 pr-8 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="w-36 sm:w-52 pl-9 pr-8 py-2 rounded-full border border-gray-200 bg-white text-sm text-primary-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
               />
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <button

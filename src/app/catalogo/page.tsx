@@ -10,7 +10,7 @@ import RecentlyViewedSection from '@/components/RecentlyViewedSection';
 import { categoryLabel } from '@/lib/format';
 
 // Categories to always show as filter pills, even if empty right now.
-const FILTER_CATEGORIES = ['SET', 'CORSET', 'BODY', 'PIJAMA', 'COMBO'];
+const FILTER_CATEGORIES = ['SET', 'CORSET', 'BODY', 'PIJAMA'];
 
 function CatalogContent() {
   const searchParams = useSearchParams();

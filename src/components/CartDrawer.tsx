@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { getImageForColor } from '@/lib/api';
+import { getImageForColor, effectivePrice } from '@/lib/api';
 
 export default function CartDrawer() {
   const { isOpen, closeCart, items, removeItem, updateQty, total, itemCount } = useCart();
@@ -56,7 +56,7 @@ export default function CartDrawer() {
             </div>
           ) : (
             items.map((item) => {
-              const price = item.variant.price ?? item.product.base_price;
+              const price = effectivePrice(item.product, item.variant);
               const imageUrl = getImageForColor(item.product.images, item.variant.color);
               return (
                 <div key={item.variant.id} className="flex gap-4">

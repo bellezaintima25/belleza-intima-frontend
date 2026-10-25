@@ -12,6 +12,23 @@
   font-display: swap;
 }
 
+/* Misma fuente Atlane, pero APLICADA SOLO a los dígitos y símbolos numéricos.
+   Al declararla como primera familia del cuerpo (ver tailwind `sans`), el
+   navegador usa Atlane para los números en TODO el sitio y mantiene la fuente
+   de texto (Corbel/Inter) para las letras. Así los números nunca se mezclan. */
+@font-face {
+  font-family: 'AtlaneDigits';
+  src: url('/atlane/Atlane%20OTF.otf') format('opentype'),
+       local('Atlane'), local('Atlane-Regular');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  /* 0-9 y los signos que suelen acompañar números: + - % $ ¤.
+     Coma y punto se dejan con la fuente del texto para no alterar la
+     puntuación de las frases (su efecto entre dígitos es imperceptible). */
+  unicode-range: U+0030-0039, U+002B, U+002D, U+0024, U+00A4, U+0025;
+}
+
 @layer base {
   * {
     box-sizing: border-box;

@@ -39,9 +39,26 @@ export default function CategoryCarousel({ categories }: { categories: Category[
   const scrollByAmount = (dir: 'left' | 'right') => {
     const el = scrollerRef.current;
     if (!el) return;
-    // Scroll by ~80% of the visible width for a natural paging feel.
-    const amount = Math.round(el.clientWidth * 0.8);
-    el.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+
+    // Ancho de un "paso" = ancho de una tarjeta + el gap entre tarjetas.
+    // Se mide la primera tarjeta real para que el paso sea exacto.
+    const firstCard = el.querySelector<HTMLElement>('[data-card]');
+    const gap = 16; // gap-4 = 1rem
+    const cardWidth = firstCard ? firstCard.offsetWidth + gap : Math.round(el.clientWidth * 0.8);
+
+    // Cuántas tarjetas caben a la vista (al menos 1) -> paginamos por bloques.
+    const perView = Math.max(1, Math.floor(el.clientWidth / cardWidth));
+    const step = cardWidth * perView;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    let target = dir === 'left' ? el.scrollLeft - step : el.scrollLeft + step;
+
+    // Ajuste a los extremos para no dejar espacio en blanco:
+    // si quedamos cerca del final/inicio, vamos exactamente al borde.
+    if (target >= maxScroll - cardWidth * 0.5) target = maxScroll;
+    if (target <= cardWidth * 0.5) target = 0;
+
+    el.scrollTo({ left: Math.max(0, Math.min(maxScroll, target)), behavior: 'smooth' });
   };
 
   return (
@@ -61,11 +78,12 @@ export default function CategoryCarousel({ categories }: { categories: Category[
       {/* Scroller */}
       <div
         ref={scrollerRef}
-        className="flex md:grid md:grid-cols-4 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-smooth no-scrollbar"
+        className="flex md:grid md:grid-cols-4 gap-4 overflow-x-auto md:overflow-visible snap-x snap-proximity scroll-smooth no-scrollbar"
       >
         {categories.map((cat) => (
           <Link
             key={cat.key}
+            data-card
             href={`/catalogo?category=${cat.key}`}
             className="group relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all flex-shrink-0 w-40 md:w-auto aspect-square snap-start"
           >

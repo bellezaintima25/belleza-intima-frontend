@@ -59,6 +59,8 @@ export default function HeroCanvas({
   // Fondo según dispositivo.
   const bgUrl = isMobile ? (hero.background.image_url_mobile || hero.background.image_url) : hero.background.image_url;
   const overlay = isMobile ? (hero.background.overlay_mobile ?? hero.background.overlay) : hero.background.overlay;
+  const bgColor = isMobile ? (hero.background.color_mobile || hero.background.color) : hero.background.color;
+  const bgColorCss = bgColor ? resolveHeroColor(bgColor, '') : '';
 
   const getLayout = useCallback(
     (id: ElementId): HeroItemLayout => {
@@ -184,8 +186,8 @@ export default function HeroCanvas({
       />
     ) : null;
 
-  const titleFallback = bgUrl ? '#ffffff' : '#450b3a';
-  const paraFallback = bgUrl ? '#f3f4f6' : '#6b7280';
+  const titleFallback = bgUrl || bgColorCss ? '#ffffff' : '#450b3a';
+  const paraFallback = bgUrl || bgColorCss ? '#f3f4f6' : '#6b7280';
   const titleDefault = isMobile ? 30 : 44;
   const paraDefault = isMobile ? 15 : 18;
 
@@ -221,6 +223,8 @@ export default function HeroCanvas({
             <img src={bgUrl} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
             <div className="absolute inset-0 bg-black pointer-events-none" style={{ opacity: overlay }} />
           </>
+        ) : bgColorCss ? (
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: bgColorCss }} />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-b from-primary-50 to-white pointer-events-none" />
         )}

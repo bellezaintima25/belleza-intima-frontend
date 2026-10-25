@@ -16,6 +16,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [togglingFeatured, setTogglingFeatured] = useState<number | null>(null);
+  const [togglingSale, setTogglingSale] = useState<number | null>(null);
 
   // Búsqueda y filtros
   const [query, setQuery] = useState('');
@@ -23,6 +24,7 @@ export default function AdminProductsPage() {
   const [fSize, setFSize] = useState('');
   const [fColor, setFColor] = useState('');
   const [fStock, setFStock] = useState<StockFilter>('all');
+  const [fSale, setFSale] = useState<'all' | 'sale'>('all');
 
   const load = () => {
     setLoading(true);
@@ -70,13 +72,14 @@ export default function AdminProductsPage() {
         if (fStock === 'out' && total !== 0) return false;
         if (fStock === 'low' && !isLow(p)) return false;
       }
+      if (fSale === 'sale' && !p.on_sale) return false;
       return true;
     });
-  }, [products, query, fCategory, fSize, fColor, fStock]);
+  }, [products, query, fCategory, fSize, fColor, fStock, fSale]);
 
-  const hasActiveFilters = query || fCategory || fSize || fColor || fStock !== 'all';
+  const hasActiveFilters = query || fCategory || fSize || fColor || fStock !== 'all' || fSale !== 'all';
   const clearFilters = () => {
-    setQuery(''); setFCategory(''); setFSize(''); setFColor(''); setFStock('all');
+    setQuery(''); setFCategory(''); setFSize(''); setFColor(''); setFStock('all'); setFSale('all');
   };
 
   const handleToggleFeatured = async (p: AdminProduct) => {
@@ -92,6 +95,50 @@ export default function AdminProductsPage() {
       alert('No se pudo actualizar el destacado. Intenta de nuevo.');
     } finally {
       setTogglingFeatured(null);
+    }
+  };
+
+  // Enciende/apaga la oferta de un producto desde la tabla. Si va a encenderse
+  // y no tiene un porcentaje configurado, lo pide; si lo tiene, solo lo activa.
+  const handleToggleSale = async (p: AdminProduct) => {
+    const turningOn = !p.on_sale;
+    let percent = p.discount_percent;
+
+    if (turningOn && (!percent || percent <= 0)) {
+      const input = prompt(`Porcentaje de descuento para "${p.name}" (1–100):`, '20');
+      if (input === null) return; // cancelado
+      const n = Math.round(Number(input.replace(',', '.')));
+      if (!Number.isFinite(n) || n <= 0 || n > 100) {
+        alert('Escribe un número válido entre 1 y 100.');
+        return;
+      }
+      percent = n;
+    }
+
+    setTogglingSale(p.id);
+    // Actualización optimista (recalcula precio final y on_sale localmente).
+    setProducts((prev) => prev.map((x) => {
+      if (x.id !== p.id) return x;
+      const effPct = turningOn ? percent : x.discount_percent;
+      const finalPrice = turningOn && effPct > 0 ? Math.round(x.base_price * (1 - effPct / 100)) : x.base_price;
+      return {
+        ...x,
+        discount_active: turningOn,
+        discount_percent: effPct,
+        on_sale: turningOn && effPct > 0,
+        final_price: finalPrice,
+        discount_amount: Math.max(0, x.base_price - finalPrice),
+      };
+    }));
+
+    try {
+      const updated = await adminApi.products.update(p.id, { discount_active: turningOn, discount_percent: percent });
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, ...updated } : x)));
+    } catch {
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? p : x))); // revertir
+      alert('No se pudo actualizar la oferta. Intenta de nuevo.');
+    } finally {
+      setTogglingSale(null);
     }
   };
 
@@ -167,6 +214,12 @@ export default function AdminProductsPage() {
             <option value="out">Sin stock</option>
           </select>
 
+          <select value={fSale} onChange={(e) => setFSale(e.target.value as 'all' | 'sale')}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-300">
+            <option value="all">Oferta: todos</option>
+            <option value="sale">Solo en oferta</option>
+          </select>
+
           {hasActiveFilters && (
             <button onClick={clearFilters}
               className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-primary-600 px-2 py-2">
@@ -190,10 +243,11 @@ export default function AdminProductsPage() {
               <tr className="border-b border-gray-100 text-left bg-gray-50">
                 <th className="px-5 py-3 font-semibold text-gray-500">Producto</th>
                 <th className="px-5 py-3 font-semibold text-gray-500">Categoría</th>
-                <th className="px-5 py-3 font-semibold text-gray-500">Precio base</th>
+                <th className="px-5 py-3 font-semibold text-gray-500">Precio</th>
                 <th className="px-5 py-3 font-semibold text-gray-500">Variantes</th>
                 <th className="px-5 py-3 font-semibold text-gray-500">Stock total</th>
                 <th className="px-5 py-3 font-semibold text-gray-500">Destacado</th>
+                <th className="px-5 py-3 font-semibold text-gray-500">Oferta</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
@@ -218,7 +272,21 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3 text-gray-500">{categoryLabel(p.category)}</td>
-                    <td className="px-5 py-3 font-medium text-gray-700 nums">{formatPrice(p.base_price)}</td>
+                    <td className="px-5 py-3 nums">
+                      {p.on_sale ? (
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-primary-700">{formatPrice(p.final_price)}</span>
+                            <span className="text-[10px] font-bold uppercase bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full">
+                              -{Math.round(p.discount_percent)}%
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-400 line-through">{formatPrice(p.base_price)}</span>
+                        </div>
+                      ) : (
+                        <span className="font-medium text-gray-700">{formatPrice(p.base_price)}</span>
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-gray-600">{p.variants.length}</td>
                     <td className="px-5 py-3">
                       <span className={`font-semibold ${
@@ -247,6 +315,30 @@ export default function AdminProductsPage() {
                           }`}
                         />
                       </button>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleToggleSale(p)}
+                          disabled={togglingSale === p.id}
+                          role="switch"
+                          aria-checked={p.on_sale}
+                          aria-label={p.on_sale ? 'Quitar de ofertas' : 'Poner en oferta'}
+                          title={p.on_sale ? 'En oferta — clic para quitar' : 'Poner en oferta'}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
+                            p.on_sale ? 'bg-primary-600' : 'bg-gray-200'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                              p.on_sale ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                        {p.on_sale && (
+                          <span className="text-xs font-semibold text-primary-700">-{Math.round(p.discount_percent)}%</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2 justify-end">

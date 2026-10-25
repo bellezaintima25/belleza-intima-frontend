@@ -63,6 +63,8 @@ export interface HeroBackground {
   overlay: number;
   image_url_mobile?: string;
   overlay_mobile?: number;
+  color?: string;
+  color_mobile?: string;
 }
 
 export interface HeroContent {
@@ -97,6 +99,11 @@ export interface AdminProduct {
   category: string;
   base_price: number;
   featured: boolean;
+  discount_percent: number;
+  discount_active: boolean;
+  final_price: number;
+  discount_amount: number;
+  on_sale: boolean;
   variants: VariantOut[];
   images: ImageOut[];
 }
@@ -134,7 +141,75 @@ export interface AdminOrder {
   stock_applied: boolean;
   created_at: string;
   sent_at: string | null;
+  combo_id?: number | null;
+  combo_name?: string | null;
   items: OrderItemDetail[];
+}
+
+export type ComboPricingMode = 'none' | 'fixed' | 'percent';
+
+export interface ComboItemIn {
+  product_id: number;
+  quantity: number;
+  pricing_mode: ComboPricingMode;
+  special_price?: number | null;
+  discount_percent?: number | null;
+}
+
+export interface ComboItemOut {
+  id: number;
+  product_id: number;
+  quantity: number;
+  pricing_mode: ComboPricingMode;
+  special_price: number | null;
+  discount_percent: number | null;
+  product: {
+    id: number;
+    code: string;
+    name: string;
+    category: string;
+    base_price: number;
+    images: ImageOut[];
+  } | null;
+  // Calculados por el backend:
+  unit_price: number;
+  line_original: number;
+  line_final: number;
+  line_savings: number;
+}
+
+export interface ComboImageOut {
+  id: number;
+  combo_id: number;
+  url: string;
+  sort_order: number;
+}
+
+export interface Combo {
+  id: number;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  active: boolean;
+  created_at: string;
+  items: ComboItemOut[];
+  images: ComboImageOut[];
+  sort_order: number;
+  include_product_images: boolean;
+  // Calculados por el backend:
+  original_price: number;
+  final_price: number;
+  savings: number;
+  savings_percent: number;
+}
+
+export interface ComboInput {
+  name: string;
+  description?: string | null;
+  image_url?: string | null;
+  active: boolean;
+  include_product_images: boolean;
+  items: ComboItemIn[];
 }
 
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
@@ -255,5 +330,35 @@ export const adminApi = {
       req<HeroVersion>(`/site/hero/history/${versionId}/duplicate`, { method: 'POST' }),
     pinVersion: (versionId: number) =>
       req<HeroVersion>(`/site/hero/history/${versionId}/pin`, { method: 'POST' }),
+  },
+
+  combos: {
+    list: () => req<Combo[]>('/combos'),
+    get: (id: number) => req<Combo>(`/combos/${id}`),
+    create: (data: ComboInput) => req<Combo>('/combos', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Partial<ComboInput>) =>
+      req<Combo>(`/combos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: number) => req<void>(`/combos/${id}`, { method: 'DELETE' }),
+    reorder: (orderedIds: number[]) =>
+      req<Combo[]>('/combos/reorder', { method: 'PUT', body: JSON.stringify(orderedIds) }),
+    uploadImage: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return req<{ url: string }>('/combos/image/upload', { method: 'POST', body: form });
+    },
+    // Galería de varias fotos por combo
+    images: (comboId: number) => req<ComboImageOut[]>(`/combos/${comboId}/images`),
+    uploadGalleryImage: (comboId: number, file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return req<ComboImageOut>(`/combos/${comboId}/images/upload`, { method: 'POST', body: form });
+    },
+    deleteImage: (comboId: number, imageId: number) =>
+      req<void>(`/combos/${comboId}/images/${imageId}`, { method: 'DELETE' }),
+    reorderImages: (comboId: number, orderedIds: number[]) =>
+      req<ComboImageOut[]>(`/combos/${comboId}/images/reorder`, {
+        method: 'PUT',
+        body: JSON.stringify(orderedIds),
+      }),
   },
 };

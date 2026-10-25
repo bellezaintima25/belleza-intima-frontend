@@ -57,9 +57,14 @@ export default function HeroFreeView({
   const overlay = isMobile
     ? (hero.background.overlay_mobile ?? hero.background.overlay)
     : hero.background.overlay;
+  // Color sólido de respaldo (solo aplica cuando no hay imagen).
+  const bgColor = isMobile
+    ? (hero.background.color_mobile || hero.background.color)
+    : hero.background.color;
+  const bgColorCss = bgColor ? resolveHeroColor(bgColor, '') : '';
 
-  const titleFallback = bgUrl ? '#ffffff' : '#450b3a';
-  const paraFallback = bgUrl ? '#f3f4f6' : '#6b7280';
+  const titleFallback = bgUrl || bgColorCss ? '#ffffff' : '#450b3a';
+  const paraFallback = bgUrl || bgColorCss ? '#f3f4f6' : '#6b7280';
 
   // Devuelve el layout del dispositivo activo, con fallback al de escritorio.
   const pick = (desktop: HeroItemLayout | null | undefined, mobile: HeroItemLayout | null | undefined, def: HeroItemLayout) =>
@@ -83,6 +88,8 @@ export default function HeroFreeView({
             <img src={bgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black" style={{ opacity: overlay }} />
           </>
+        ) : bgColorCss ? (
+          <div className="absolute inset-0" style={{ backgroundColor: bgColorCss }} />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-b from-primary-50 to-white" />
         )}

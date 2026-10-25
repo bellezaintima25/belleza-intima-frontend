@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { api } from '@/lib/api';
+import { api, effectivePrice } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
 
 export default function CheckoutPage() {
@@ -54,7 +54,7 @@ export default function CheckoutPage() {
         items: items.map((item) => ({
           variant_id: item.variant.id,
           quantity: item.quantity,
-          unit_price: item.variant.price ?? item.product.base_price,
+          unit_price: effectivePrice(item.product, item.variant),
         })),
       });
 
@@ -86,7 +86,7 @@ export default function CheckoutPage() {
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-3 h-fit">
           <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Resumen</h2>
           {items.map((item) => {
-            const price = item.variant.price ?? item.product.base_price;
+            const price = effectivePrice(item.product, item.variant);
             return (
               <div key={item.variant.id} className="flex justify-between text-sm">
                 <div>

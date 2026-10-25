@@ -7,7 +7,7 @@ import { ShoppingBagIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { MagnifyingGlassPlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
-import { api, getImageForColor } from '@/lib/api';
+import { api, getImageForColor, effectivePrice } from '@/lib/api';
 import type { Product, ProductVariant } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -320,7 +320,9 @@ export default function ProductDetailPage() {
     if (outside) setLightboxOpen(false);
   };
 
-  const price = selectedVariant?.price ?? product.base_price;
+  // Precio "antes" (base o el de la variante) y precio a cobrar (con descuento).
+  const basePrice = selectedVariant?.price ?? product.base_price;
+  const price = effectivePrice(product, selectedVariant);
 
   // Whether this product is in the user's favorites (me gusta)
   const favorite = isFavorite(product.id);
@@ -429,7 +431,17 @@ export default function ProductDetailPage() {
             {categoryLabel(product.category)}
           </span>
           <h1 className="mt-1 font-serif text-3xl font-semibold text-primary-700">{product.name}</h1>
-          <p className="mt-1 text-2xl font-bold text-primary-600 nums">{formatPrice(price)}</p>
+          <p className="mt-1 text-2xl font-bold text-primary-600 nums">
+            {product.on_sale ? (
+              <span className="flex items-baseline gap-2 flex-wrap">
+                <span>{formatPrice(price)}</span>
+                <span className="text-base text-gray-400 line-through font-medium">{formatPrice(basePrice)}</span>
+                <span className="text-sm text-emerald-600 font-semibold">-{Math.round(product.discount_percent)}%</span>
+              </span>
+            ) : (
+              formatPrice(price)
+            )}
+          </p>
 
           {product.description && (
             <p className="mt-3 text-gray-600 text-sm leading-relaxed">{product.description}</p>

@@ -9,10 +9,12 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        // Secondary / body font: Corbel (system font on Windows/Office).
-        sans: ['Corbel', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+        // 'AtlaneDigits' va primero: por su unicode-range solo captura los
+        // dígitos (0-9) y los representa con Atlane; las letras caen a Corbel.
+        // Así los números del sitio usan la misma tipografía que los precios.
+        sans: ['AtlaneDigits', 'Corbel', 'var(--font-inter)', 'system-ui', 'sans-serif'],
         // Primary / display font: Atlane (loaded via @font-face in globals.css).
-        serif: ['Atlane', 'var(--font-playfair)', 'Georgia', 'serif'],
+        serif: ['AtlaneDigits', 'Atlane', 'var(--font-playfair)', 'Georgia', 'serif'],
       },
       colors: {
         // Brand palette — updated tones.

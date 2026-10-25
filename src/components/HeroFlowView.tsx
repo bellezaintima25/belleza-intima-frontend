@@ -20,12 +20,16 @@ export default function HeroFlowView({
   interactive?: boolean;
 }) {
   const bg = hero.background.image_url;
+  const bgColorCss = hero.background.color ? resolveHeroColor(hero.background.color, '') : '';
+  // Hay un fondo "oscuro" (imagen o color) → texto por defecto en blanco.
+  const hasBg = Boolean(bg || bgColorCss);
 
   return (
     <div
       className={`relative px-8 py-10 sm:px-16 sm:py-14 flex flex-col-reverse md:flex-row items-center gap-10 md:gap-16 ${
-        bg ? 'text-white' : ''
+        hasBg ? 'text-white' : ''
       }`}
+      style={!bg && bgColorCss ? { backgroundColor: bgColorCss } : undefined}
     >
       {/* Texto + botones */}
       <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
@@ -34,7 +38,7 @@ export default function HeroFlowView({
             <h1
               key={i}
               className="font-serif text-4xl sm:text-5xl font-semibold leading-tight max-w-2xl"
-              style={{ color: resolveHeroColor(p.color, bg ? '#ffffff' : '#450b3a'), textAlign: p.align ?? undefined, fontSize: p.font_size ? `${p.font_size}px` : undefined }}
+              style={{ color: resolveHeroColor(p.color, hasBg ? '#ffffff' : '#450b3a'), textAlign: p.align ?? undefined, fontSize: p.font_size ? `${p.font_size}px` : undefined }}
             >
               {p.text}
             </h1>
@@ -42,7 +46,7 @@ export default function HeroFlowView({
             <p
               key={i}
               className="mt-4 max-w-lg"
-              style={{ color: resolveHeroColor(p.color, bg ? '#f3f4f6' : '#6b7280'), textAlign: p.align ?? undefined, fontSize: p.font_size ? `${p.font_size}px` : undefined }}
+              style={{ color: resolveHeroColor(p.color, hasBg ? '#f3f4f6' : '#6b7280'), textAlign: p.align ?? undefined, fontSize: p.font_size ? `${p.font_size}px` : undefined }}
             >
               {p.text}
             </p>

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { adminApi } from '@/lib/adminApi';
-import type { HeroContent, HeroPhrase, HeroButton, HeroVersion } from '@/lib/adminApi';
+import type { HeroContent, HeroPhrase, HeroButton, HeroVersion, Combo } from '@/lib/adminApi';
 import { HERO_PALETTE } from '@/lib/heroPalette';
 import { categoryLabel } from '@/lib/format';
 import HeroCanvas from '@/components/admin/HeroCanvas';
@@ -22,6 +22,9 @@ const EMPTY_HERO: HeroContent = {
 export default function AdminHomePage() {
   const [covers, setCovers] = useState<Record<string, string>>({});
   const [catalogImages, setCatalogImages] = useState<string[]>([]);
+  // Datos para construir el selector de destino de los botones del hero.
+  const [combosList, setCombosList] = useState<Combo[]>([]);
+  const [categoryKeys, setCategoryKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [picker, setPicker] = useState<string | null>(null);
@@ -46,11 +49,12 @@ export default function AdminHomePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [coverList, products, heroData, historyData] = await Promise.all([
+      const [coverList, products, heroData, historyData, combos] = await Promise.all([
         adminApi.categories.covers(),
         adminApi.products.list(),
         adminApi.site.getHero(),
         adminApi.site.history(),
+        adminApi.combos.list(),
       ]);
       const map: Record<string, string> = {};
       coverList.forEach((c) => { map[c.category] = c.image_url; });
@@ -60,6 +64,10 @@ export default function AdminHomePage() {
       setCatalogImages(Array.from(urls));
       setHero(heroData);
       setHistory(historyData);
+      // Datos dinámicos para el selector de destino de botones.
+      setCombosList(combos);
+      // Categorías reales = las que tienen al menos un producto, ordenadas.
+      setCategoryKeys(Array.from(new Set(products.map((p) => p.category))).sort());
     } finally {
       setLoading(false);
     }
@@ -74,6 +82,34 @@ export default function AdminHomePage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Opciones del selector de destino de los botones del hero, construidas con
+  // datos reales: se actualizan solas si cambian las categorías o los combos.
+  const buttonLinks = useMemo(() => {
+    const opts: { href: string; label: string }[] = [
+      { href: '/catalogo', label: 'Catálogo (todo)' },
+      { href: '/combos', label: 'Combos (todos)' },
+    ];
+    // Categorías que realmente existen (con productos).
+    categoryKeys.forEach((cat) => {
+      opts.push({ href: `/catalogo?category=${encodeURIComponent(cat)}`, label: `Categoría: ${categoryLabel(cat)}` });
+    });
+    // Combos existentes (enlace directo a cada uno).
+    combosList.forEach((c) => {
+      opts.push({ href: `/combos/${c.id}`, label: `Combo: ${c.name}` });
+    });
+    // Páginas fijas.
+    opts.push({ href: '/nuestra-marca', label: 'Nuestra marca' });
+    opts.push({ href: '/favoritos', label: 'Favoritos' });
+    // Enlace personalizado (campo de texto libre).
+    opts.push({ href: '', label: 'Enlace personalizado…' });
+    return opts;
+  }, [categoryKeys, combosList]);
+
+  const predefinedHrefs = useMemo(
+    () => new Set(buttonLinks.map((o) => o.href).filter(Boolean)),
+    [buttonLinks],
+  );
 
   // ---- Frases ----
   const addPhrase = () =>
@@ -473,28 +509,56 @@ export default function AdminHomePage() {
                 </div>
                 <div className="space-y-3">
                   {hero.buttons.map((b, i) => (
-                    <div key={i} className="rounded-xl border border-gray-100 p-3 flex flex-wrap items-center gap-2">
-                      <input
-                        className="flex-1 min-w-[120px] rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
-                        value={b.label}
-                        placeholder="Texto del botón"
-                        onChange={(e) => updateButton(i, { label: e.target.value })}
-                      />
-                      <input
-                        className="flex-1 min-w-[120px] rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
-                        value={b.href}
-                        placeholder="/catalogo"
-                        onChange={(e) => updateButton(i, { href: e.target.value })}
-                      />
-                      <select
-                        value={b.variant}
-                        onChange={(e) => updateButton(i, { variant: e.target.value as HeroButton['variant'] })}
-                        className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs"
-                      >
-                        <option value="primary">Principal</option>
-                        <option value="secondary">Secundario</option>
-                      </select>
-                      <button onClick={() => removeButton(i)} className="h-8 px-2 rounded border border-rose-200 text-rose-500 text-xs" title="Eliminar botón">Quitar</button>
+                    <div key={i} className="rounded-xl border border-gray-100 p-3 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          className="flex-1 min-w-[120px] rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
+                          value={b.label}
+                          placeholder="Texto del botón"
+                          onChange={(e) => updateButton(i, { label: e.target.value })}
+                        />
+                        <select
+                          value={b.variant}
+                          onChange={(e) => updateButton(i, { variant: e.target.value as HeroButton['variant'] })}
+                          className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs"
+                        >
+                          <option value="primary">Principal</option>
+                          <option value="secondary">Secundario</option>
+                        </select>
+                        <button onClick={() => removeButton(i)} className="h-8 px-2 rounded border border-rose-200 text-rose-500 text-xs" title="Eliminar botón">Quitar</button>
+                      </div>
+
+                      {/* Destino del botón: selector de rutas comunes + enlace personalizado */}
+                      {(() => {
+                        // ¿El href actual es uno predefinido o un enlace personalizado?
+                        const isPredefined = predefinedHrefs.has(b.href);
+                        const selectValue = isPredefined ? b.href : '';
+                        return (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-gray-500 flex items-center gap-1.5">
+                              <span>Al pulsar, ir a:</span>
+                              <select
+                                value={selectValue}
+                                onChange={(e) => updateButton(i, { href: e.target.value })}
+                                className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs"
+                              >
+                                {buttonLinks.map((opt) => (
+                                  <option key={opt.label} value={opt.href}>{opt.label}</option>
+                                ))}
+                              </select>
+                            </label>
+                            {/* Campo de texto solo para enlace personalizado */}
+                            {!isPredefined && (
+                              <input
+                                className="flex-1 min-w-[160px] rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
+                                value={b.href}
+                                placeholder="Ej. /combos  o  https://instagram.com/tutienda"
+                                onChange={(e) => updateButton(i, { href: e.target.value })}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
                   {hero.buttons.length === 0 && (
@@ -533,6 +597,26 @@ export default function AdminHomePage() {
                   </label>
                 )}
 
+                {/* Color sólido escritorio (se usa cuando NO hay imagen) */}
+                {!hero.background.image_url && (
+                  <div className="mt-2 rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-gray-600">Color de fondo 🖥️</span>
+                      <ColorPicker
+                        value={hero.background.color ?? ''}
+                        onChange={(v) => setHero((h) => ({ ...h, background: { ...h.background, color: v } }))}
+                      />
+                      {hero.background.color && (
+                        <button type="button" onClick={() => setHero((h) => ({ ...h, background: { ...h.background, color: '' } }))}
+                          className="text-xs text-rose-500">Quitar color</button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Alternativa a la imagen: pinta el fondo con un color sólido. Si subes una imagen, la imagen tiene prioridad.
+                    </p>
+                  </div>
+                )}
+
                 {/* Fondo móvil */}
                 <p className="text-[11px] font-semibold text-gray-400 mb-1 mt-4">📱 Fondo móvil (opcional; si está vacío usa el de escritorio)</p>
                 <div className="flex items-center gap-3 flex-wrap">
@@ -558,6 +642,26 @@ export default function AdminHomePage() {
                       onChange={(e) => setHero((h) => ({ ...h, background: { ...h.background, overlay_mobile: Number(e.target.value) } }))}
                       className="w-full" />
                   </label>
+                )}
+
+                {/* Color sólido móvil (se usa cuando NO hay imagen móvil ni de escritorio) */}
+                {!hero.background.image_url_mobile && !hero.background.image_url && (
+                  <div className="mt-2 rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-gray-600">Color de fondo 📱</span>
+                      <ColorPicker
+                        value={hero.background.color_mobile ?? ''}
+                        onChange={(v) => setHero((h) => ({ ...h, background: { ...h.background, color_mobile: v } }))}
+                      />
+                      {hero.background.color_mobile && (
+                        <button type="button" onClick={() => setHero((h) => ({ ...h, background: { ...h.background, color_mobile: '' } }))}
+                          className="text-xs text-rose-500">Quitar color</button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Opcional. Si está vacío usa el color de escritorio.
+                    </p>
+                  </div>
                 )}
               </div>
 
