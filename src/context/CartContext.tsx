@@ -1,8 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef, ReactNode } from 'react';
 import type { Product, ProductVariant } from '@/lib/api';
 import { effectivePrice } from '@/lib/api';
+
+// Clave de almacenamiento del carrito en el navegador.
+const CART_STORAGE_KEY = 'belleza-intima-cart';
 
 export interface CartItem {
   product: Product;
@@ -21,10 +24,14 @@ type CartAction =
   | { type: 'UPDATE_QTY'; variantId: number; quantity: number }
   | { type: 'CLEAR' }
   | { type: 'OPEN' }
-  | { type: 'CLOSE' };
+  | { type: 'CLOSE' }
+  | { type: 'HYDRATE'; items: CartItem[] };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
+    case 'HYDRATE':
+      // Reemplaza los items con los guardados en el navegador (sin abrir el drawer).
+      return { ...state, items: action.items };
     case 'ADD': {
       const existing = state.items.findIndex((i) => i.variant.id === action.variant.id);
       if (existing >= 0) {
@@ -82,6 +89,34 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false });
+  // Evita guardar el estado vacío inicial en localStorage antes de hidratar.
+  const hydrated = useRef(false);
+
+  // 1) Al montar (solo en el navegador), carga el carrito guardado.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      if (raw) {
+        const items = JSON.parse(raw) as CartItem[];
+        if (Array.isArray(items) && items.length > 0) {
+          dispatch({ type: 'HYDRATE', items });
+        }
+      }
+    } catch {
+      /* almacenamiento no disponible o datos corruptos: se ignora */
+    }
+    hydrated.current = true;
+  }, []);
+
+  // 2) Cada vez que cambian los items, los guarda (tras la hidratación inicial).
+  useEffect(() => {
+    if (!hydrated.current) return;
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
+    } catch {
+      /* si el almacenamiento falla (modo privado, lleno), no rompe la app */
+    }
+  }, [state.items]);
 
   const value: CartContextValue = {
     items: state.items,

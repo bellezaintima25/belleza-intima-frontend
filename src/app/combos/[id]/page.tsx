@@ -106,14 +106,15 @@ export default function ComboDetailPage() {
           size: selections[it.product_id]?.size ?? null,
           color: selections[it.product_id]?.color ?? null,
         }));
-      const { order_id, whatsapp_url } = await api.combos.order(combo.id, {
+      const { order_id, token, whatsapp_url } = await api.combos.order(combo.id, {
         customer_name: name.trim(),
         customer_phone: phone.trim(),
         selections: payload,
       });
       // Abre WhatsApp con el pedido listo y lleva a la página de éxito.
       window.open(whatsapp_url, '_blank');
-      router.push(`/checkout/success?order=${order_id}`);
+      const tokenQs = token ? `&token=${encodeURIComponent(token)}` : '';
+      router.push(`/checkout/success?order=${order_id}${tokenQs}`);
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'No se pudo crear el pedido. Intenta de nuevo.');
     } finally {

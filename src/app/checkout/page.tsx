@@ -67,8 +67,9 @@ export default function CheckoutPage() {
       // 4. Open WhatsApp in new tab
       window.open(whatsapp_url, '_blank');
 
-      // 5. Redirect to success page
-      router.push(`/checkout/success?order=${order.id}`);
+      // 5. Redirect to success page (con token para el comprobante/seguimiento)
+      const tokenQs = order.token ? `&token=${encodeURIComponent(order.token)}` : '';
+      router.push(`/checkout/success?order=${order.id}${tokenQs}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Ocurrió un error. Intenta de nuevo.';
       setError(message);

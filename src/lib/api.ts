@@ -72,12 +72,41 @@ export interface OrderOut {
   status: 'PENDING' | 'SENT';
   created_at: string;
   sent_at: string | null;
+  token?: string;
   items: Array<{
     id: number;
     variant_id: number;
     quantity: number;
     unit_price: number;
   }>;
+}
+
+export type PaymentStatus = 'PENDIENTE' | 'PAGADO' | 'ENVIADO' | 'ENTREGADO' | 'CANCELADO';
+
+export interface OrderTrackItem {
+  product_name: string;
+  size: string | null;
+  color: string | null;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  original_unit_price: number;
+  line_original: number;
+  line_savings: number;
+}
+
+export interface OrderTrack {
+  id: number;
+  token: string;
+  customer_name: string;
+  status: 'PENDING' | 'SENT';
+  payment_status: PaymentStatus;
+  created_at: string;
+  combo_name: string | null;
+  items: OrderTrackItem[];
+  total: number;
+  original_total: number;
+  savings: number;
 }
 
 export interface WhatsAppLinkOut {
@@ -223,6 +252,12 @@ export const api = {
     sendWhatsApp: (orderId: number) =>
       request<WhatsAppLinkOut>(`/orders/${orderId}/send-whatsapp`, { method: 'POST' }),
     list: () => request<OrderOut[]>('/orders'),
+    trackByToken: (token: string) => request<OrderTrack>(`/orders/track/${encodeURIComponent(token)}`),
+    trackByPhone: (orderId: number, phone: string) =>
+      request<OrderTrack>('/orders/track', {
+        method: 'POST',
+        body: JSON.stringify({ order_id: orderId, customer_phone: phone }),
+      }),
   },
   combos: {
     list: () => request<Combo[]>('/combos?active=true'),
@@ -243,7 +278,7 @@ export const api = {
         selections: Array<{ product_id: number; size: string | null; color: string | null }>;
       },
     ) =>
-      request<{ order_id: number; whatsapp_url: string }>(`/combos/${id}/order`, {
+      request<{ order_id: number; token: string; whatsapp_url: string }>(`/combos/${id}/order`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),

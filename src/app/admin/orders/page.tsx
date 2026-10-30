@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminOrder, PaymentStatus, AdminProduct } from '@/lib/adminApi';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, orderNumber, parseOrderNumber } from '@/lib/format';
 
 function orderTotal(order: AdminOrder): number {
   return order.items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
@@ -231,8 +231,13 @@ export default function AdminOrdersPage() {
     const toTs = filterTo ? new Date(`${filterTo}T23:59:59.999`).getTime() : null;
     let list = orders.filter((o) => {
       if (q) {
-        const hay = `${o.customer_name} ${o.customer_phone}`.toLowerCase();
-        if (!hay.includes(q)) return false;
+        // Busca por nombre, teléfono o número de pedido (formateado, id crudo,
+        // o lo que el cliente escriba como "BI-100003"/"100003"/"3").
+        const parsedId = parseOrderNumber(q);
+        const hay = `${o.customer_name} ${o.customer_phone} ${orderNumber(o.id)} ${o.id}`.toLowerCase();
+        const matchesText = hay.includes(q);
+        const matchesId = parsedId !== null && parsedId === o.id;
+        if (!matchesText && !matchesId) return false;
       }
       if (filterStatus !== 'ALL' && o.payment_status !== filterStatus) return false;
       const ts = new Date(o.created_at).getTime();
@@ -294,7 +299,7 @@ export default function AdminOrdersPage() {
               type="text"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              placeholder="Nombre o teléfono…"
+              placeholder="Nombre, teléfono o N.º de pedido…"
               className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
             />
           </label>
@@ -422,6 +427,7 @@ export default function AdminOrdersPage() {
                     )}
                   </div>
                   <p className="text-xs text-gray-400">{order.customer_phone}</p>
+                  <p className="text-xs font-semibold text-gray-500 nums mt-0.5">{orderNumber(order.id)}</p>
                 </div>
 
                 {/* Fecha */}
