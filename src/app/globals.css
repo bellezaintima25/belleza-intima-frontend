@@ -207,3 +207,45 @@
 .lightbox-scroll::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Impresión del comprobante de pedido.                                */
+/* Al imprimir (o "Guardar como PDF"), se oculta todo y se muestra     */
+/* únicamente el área marcada con [data-print-area], en una hoja       */
+/* limpia. Los elementos con .no-print no se imprimen (botones, etc.). */
+/* ------------------------------------------------------------------ */
+@media print {
+  /* Oculta todo el contenido del body por defecto. */
+  body * {
+    visibility: hidden;
+  }
+  /* Muestra solo el área de impresión y su contenido. */
+  [data-print-area],
+  [data-print-area] * {
+    visibility: visible;
+  }
+  /* Coloca el comprobante arriba a la izquierda, ocupando el ancho. */
+  [data-print-area] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 24px;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  /* Elementos que nunca se imprimen (botones de acción, etc.). */
+  .no-print {
+    display: none !important;
+  }
+  /* Encabezado de marca que solo aparece al imprimir. */
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* El encabezado de impresión está oculto en pantalla; solo en el PDF/papel. */
+.print-only {
+  display: none;
+}

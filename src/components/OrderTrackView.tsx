@@ -16,15 +16,22 @@ function stepIndex(status: PaymentStatus): number {
   return i; // -1 si es CANCELADO
 }
 
-export default function OrderTrackView({ order }: { order: OrderTrack }) {
+export default function OrderTrackView({ order, printable = true }: { order: OrderTrack; printable?: boolean }) {
   const cancelled = order.payment_status === 'CANCELADO';
   const activeIdx = stepIndex(order.payment_status);
 
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
 
+  const handlePrint = () => window.print();
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+    <div data-print-area className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+      {/* Encabezado de marca (solo visible al imprimir / en el PDF) */}
+      <div className="print-only" style={{ marginBottom: 16, textAlign: 'center' }}>
+        <p style={{ fontSize: 20, fontWeight: 700, color: '#8B1A3A', fontFamily: 'Atlane, serif' }}>Belleza Íntima</p>
+        <p style={{ fontSize: 12, color: '#6b7280' }}>Comprobante de pedido</p>
+      </div>
       {/* Encabezado */}
       <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
         <div>
@@ -123,6 +130,22 @@ export default function OrderTrackView({ order }: { order: OrderTrack }) {
           </div>
         </div>
       </div>
+
+      {/* Botón de descarga/impresión (no sale en el PDF) */}
+      {printable && (
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="no-print mt-5 w-full flex items-center justify-center gap-2 border border-primary-200 text-primary-700 hover:bg-primary-50 font-semibold py-2.5 rounded-xl transition-colors text-sm"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M6 9V2h12v7" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <path d="M6 14h12v8H6z" />
+          </svg>
+          Descargar / imprimir comprobante
+        </button>
+      )}
     </div>
   );
 }
