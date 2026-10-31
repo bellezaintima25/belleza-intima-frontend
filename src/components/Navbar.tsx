@@ -19,7 +19,7 @@ import { HeartIcon } from '@heroicons/react/24/outline';
 const mainLinks = [
   { href: '/', label: 'INICIO' },
   { href: '/catalogo', label: 'CATÁLOGO', hasDropdown: true },
-  { href: '/combos', label: 'COMBOS' },
+  { href: '/combos', label: 'COMBINACIONES' },
   { href: '/especiales', label: 'ESPECIALES' },
   { href: '/nuestra-marca', label: 'NUESTRA MARCA' },
 ];

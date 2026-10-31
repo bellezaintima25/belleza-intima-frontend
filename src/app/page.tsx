@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { api } from '@/lib/api';
-import type { Product, HeroContent } from '@/lib/api';
+import { api, imageSrc } from '@/lib/api';
+import type { Product, HeroContent, Combo, Testimonial } from '@/lib/api';
 import HeroFreeView from '@/components/HeroFreeView';
 import HeroFlowView from '@/components/HeroFlowView';
 import ProductCard from '@/components/ProductCard';
+import ComboCard from '@/components/ComboCard';
 import TopBar from '@/components/TopBar';
 import CategoryCarousel from '@/components/CategoryCarousel';
 import { categoryLabel } from '@/lib/format';
@@ -36,6 +37,8 @@ const DEFAULT_HERO: HeroContent = {
 export default function HomePage() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [specials, setSpecials] = useState<Product[]>([]);
+  const [combos, setCombos] = useState<Combo[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [hero, setHero] = useState<HeroContent>(DEFAULT_HERO);
@@ -82,6 +85,20 @@ export default function HomePage() {
     // Productos en descuento para la sección "Encantos especiales".
     api.products.onSale()
       .then((p) => setSpecials(p.slice(0, 4)))
+      .catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    // Combos activos para la sección "Un mundo de combinaciones".
+    api.combos.list()
+      .then((c) => setCombos(c.slice(0, 4)))
+      .catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    // Testimonios activos para la sección "Momentos Belleza Íntima".
+    api.testimonials.list()
+      .then((t) => setTestimonials(t.slice(0, 6)))
       .catch(() => null);
   }, []);
 
@@ -181,6 +198,60 @@ export default function HomePage() {
             {specials.map((p, i) => (
               <ProductCard key={p.id} product={p} priority={i < 4} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Un mundo de combinaciones (combos) — solo si hay */}
+      {combos.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 pb-16">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-serif text-2xl font-semibold text-primary-700">Un mundo de combinaciones</h2>
+            <Link href="/combos" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
+              Ver todo →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {combos.map((c, i) => (
+              <ComboCard key={c.id} combo={c} priority={i < 4} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Momentos Belleza Íntima (testimonios) — solo si hay */}
+      {testimonials.length > 0 && (
+        <section className="bg-primary-50/60">
+          <div className="max-w-6xl mx-auto px-4 py-16">
+            <div className="text-center mb-10">
+              <h2 className="font-serif text-3xl font-semibold text-primary-700 mb-2">Momentos Belleza Íntima</h2>
+              <p className="text-gray-500">Lo que viven y sienten nuestras clientas.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {testimonials.map((t) => (
+                <figure key={t.id} className="bg-white rounded-2xl shadow-sm ring-1 ring-primary-100/60 p-5 flex flex-col">
+                  {/* Estrellas */}
+                  <div className="flex items-center gap-0.5 mb-3" aria-label={`${t.rating} de 5 estrellas`}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <span key={n} className={n <= t.rating ? 'text-amber-400' : 'text-gray-200'}>★</span>
+                    ))}
+                  </div>
+                  {/* Texto */}
+                  <blockquote className="text-gray-600 text-sm leading-relaxed flex-1">“{t.text}”</blockquote>
+                  {/* Autora */}
+                  <figcaption className="mt-4 flex items-center gap-3">
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-primary-100 flex-shrink-0 flex items-center justify-center">
+                      {t.photo_url ? (
+                        <Image src={imageSrc(t.photo_url)} alt={t.customer_name} fill sizes="40px" className="object-cover" />
+                      ) : (
+                        <span className="text-primary-500 font-serif">{t.customer_name.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-800">{t.customer_name}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
           </div>
         </section>
       )}

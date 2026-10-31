@@ -161,6 +161,8 @@ export interface Combo {
   images: ComboImagePublic[];
   sort_order: number;
   include_product_images: boolean;
+  tag: string | null;
+  tag_color: string | null;
   original_price: number;
   final_price: number;
   savings: number;
@@ -215,6 +217,17 @@ export interface HeroContent {
   logo_layout_mobile?: HeroItemLayout | null;
   logo_size?: number | null;
   logo_size_mobile?: number | null;
+}
+
+export interface Testimonial {
+  id: number;
+  customer_name: string;
+  text: string;
+  rating: number;
+  photo_url: string | null;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -283,6 +296,9 @@ export const api = {
         body: JSON.stringify(data),
       }),
   },
+  testimonials: {
+    list: () => request<Testimonial[]>('/testimonials?active=true'),
+  },
 };
 
 /** Returns the best matching image URL for a given color, or the first image, or null. */
@@ -318,4 +334,31 @@ export function effectivePrice(
     return Math.round(basis * (1 - pct / 100));
   }
   return basis;
+}
+
+/**
+ * Estilo "soft/pastel" para la etiqueta de un combo: fondo tenue, texto del
+ * mismo tono (oscuro y legible) y borde sutil. Evita badges chillones y se ve
+ * elegante sobre fotos o fondos claros.
+ * Admite el token 'primary-600' o un color hex de la paleta del admin.
+ */
+export function tagBadgeStyle(color: string | null | undefined): {
+  backgroundColor: string;
+  color: string;
+  borderColor: string;
+} {
+  // Mapa de cada color elegible -> su versión suave {bg, text, border}.
+  const MAP: Record<string, { bg: string; text: string; border: string }> = {
+    'primary-600': { bg: '#f7e8ee', text: '#8B1A3A', border: '#e4c4cf' }, // vino
+    '#dc2626':     { bg: '#fde8e8', text: '#b91c1c', border: '#f6caca' }, // rojo
+    '#f97316':     { bg: '#fdecd8', text: '#c2560c', border: '#f8d5ad' }, // naranja
+    '#16a34a':     { bg: '#e3f5e8', text: '#15803d', border: '#bfe7ca' }, // verde
+    '#2563eb':     { bg: '#e6edfd', text: '#1d4ed8', border: '#c5d6fa' }, // azul
+    '#7c3aed':     { bg: '#eee6fb', text: '#6d28d9', border: '#d7c6f5' }, // morado
+    '#db2777':     { bg: '#fce4f0', text: '#be185d', border: '#f6c3dd' }, // rosa
+    '#111827':     { bg: '#e8eaed', text: '#111827', border: '#cfd3da' }, // negro/gris
+  };
+  const key = color || 'primary-600';
+  const style = MAP[key] ?? MAP['primary-600'];
+  return { backgroundColor: style.bg, color: style.text, borderColor: style.border };
 }

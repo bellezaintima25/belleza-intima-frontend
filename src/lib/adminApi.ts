@@ -196,6 +196,8 @@ export interface Combo {
   images: ComboImageOut[];
   sort_order: number;
   include_product_images: boolean;
+  tag: string | null;
+  tag_color: string | null;
   // Calculados por el backend:
   original_price: number;
   final_price: number;
@@ -209,7 +211,28 @@ export interface ComboInput {
   image_url?: string | null;
   active: boolean;
   include_product_images: boolean;
+  tag?: string | null;
+  tag_color?: string | null;
   items: ComboItemIn[];
+}
+
+export interface Testimonial {
+  id: number;
+  customer_name: string;
+  text: string;
+  rating: number;
+  photo_url: string | null;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface TestimonialInput {
+  customer_name: string;
+  text: string;
+  rating: number;
+  photo_url?: string | null;
+  active: boolean;
 }
 
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
@@ -360,5 +383,20 @@ export const adminApi = {
         method: 'PUT',
         body: JSON.stringify(orderedIds),
       }),
+  },
+
+  testimonials: {
+    list: () => req<Testimonial[]>('/testimonials'),
+    create: (data: TestimonialInput) => req<Testimonial>('/testimonials', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Partial<TestimonialInput>) =>
+      req<Testimonial>(`/testimonials/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: number) => req<void>(`/testimonials/${id}`, { method: 'DELETE' }),
+    reorder: (orderedIds: number[]) =>
+      req<Testimonial[]>('/testimonials/reorder', { method: 'PUT', body: JSON.stringify(orderedIds) }),
+    uploadPhoto: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return req<{ url: string }>('/testimonials/photo/upload', { method: 'POST', body: form });
+    },
   },
 };

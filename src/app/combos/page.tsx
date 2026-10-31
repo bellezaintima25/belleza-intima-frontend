@@ -23,8 +23,8 @@ export default function CombosPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Encabezado al estilo del catálogo */}
       <div className="text-center mb-10">
-        <h1 className="font-serif text-4xl font-semibold text-primary-700 mb-2">Combos</h1>
-        <p className="text-gray-500">Paquetes especiales a un precio que te encantará.</p>
+        <h1 className="font-serif text-4xl font-semibold text-primary-700 mb-2">Un mundo de combinaciones</h1>
+        <p className="text-gray-500">Prendas que se complementan, a un precio especial pensado para ti.</p>
       </div>
 
       {loading ? (

@@ -7,6 +7,7 @@ const navItems = [
   { href: '/admin/products', label: 'Productos', emoji: '👗' },
   { href: '/admin/covers', label: 'Página de inicio', emoji: '🖼️' },
   { href: '/admin/combos', label: 'Combos', emoji: '🎁' },
+  { href: '/admin/testimonios', label: 'Testimonios', emoji: '💬' },
   { href: '/admin/orders', label: 'Pedidos', emoji: '📦' },
 ];
 

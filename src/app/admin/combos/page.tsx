@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminProduct, Combo, ComboInput, ComboPricingMode, ComboImageOut } from '@/lib/adminApi';
 import { formatPrice, categoryLabel } from '@/lib/format';
-import { imageSrc } from '@/lib/api';
+import { imageSrc, tagBadgeStyle } from '@/lib/api';
 
 /** Línea del editor: producto + cantidad + su propio precio especial. */
 interface DraftItem {
@@ -23,6 +23,8 @@ interface Draft {
   image_url: string;
   active: boolean;
   includeProductImages: boolean;
+  tag: string;
+  tagColor: string;
   items: DraftItem[];
 }
 
@@ -33,8 +35,25 @@ const EMPTY_DRAFT: Draft = {
   image_url: '',
   active: true,
   includeProductImages: true,
+  tag: '',
+  tagColor: '',
   items: [],
 };
+
+// Sugerencias rápidas de etiqueta para el admin (un clic las rellena).
+const TAG_SUGGESTIONS = ['Combo navideño', 'Halloween', 'San Valentín', 'Edición limitada', 'Más vendido'];
+
+// Colores disponibles para el tag (token legible + valor CSS para la vista previa).
+const TAG_COLORS: { value: string; label: string; css: string }[] = [
+  { value: 'primary-600', label: 'Vino', css: '#8B1A3A' },
+  { value: '#dc2626', label: 'Rojo', css: '#dc2626' },
+  { value: '#f97316', label: 'Naranja', css: '#f97316' },
+  { value: '#16a34a', label: 'Verde', css: '#16a34a' },
+  { value: '#2563eb', label: 'Azul', css: '#2563eb' },
+  { value: '#7c3aed', label: 'Morado', css: '#7c3aed' },
+  { value: '#db2777', label: 'Rosa', css: '#db2777' },
+  { value: '#111827', label: 'Negro', css: '#111827' },
+];
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -129,6 +148,8 @@ export default function AdminCombosPage() {
       image_url: c.image_url ?? '',
       active: c.active,
       includeProductImages: c.include_product_images,
+      tag: c.tag ?? '',
+      tagColor: c.tag_color ?? '',
       items: c.items.map((it) => ({
         product_id: it.product_id,
         quantity: it.quantity,
@@ -242,6 +263,8 @@ export default function AdminCombosPage() {
       image_url: draft.image_url.trim() || null,
       active: draft.active,
       include_product_images: draft.includeProductImages,
+      tag: draft.tag.trim() || null,
+      tag_color: draft.tag.trim() ? (draft.tagColor || 'primary-600') : null,
       items: draft.items.map((it) => ({
         product_id: it.product_id,
         quantity: it.quantity,
@@ -373,6 +396,56 @@ export default function AdminCombosPage() {
                 <textarea className={`${inputCls} resize-none`} rows={2} value={draft.description}
                   placeholder="Describe brevemente el combo"
                   onChange={(e) => patch({ description: e.target.value })} />
+              </div>
+
+              {/* Etiqueta destacada (opcional): texto + color */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Etiqueta destacada (opcional)</label>
+                <input
+                  className={inputCls}
+                  value={draft.tag}
+                  placeholder="Ej. Combo navideño"
+                  maxLength={30}
+                  onChange={(e) => patch({ tag: e.target.value })}
+                />
+                {/* Sugerencias rápidas */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {TAG_SUGGESTIONS.map((s) => (
+                    <button key={s} type="button"
+                      onClick={() => patch({ tag: s, tagColor: draft.tagColor || 'primary-600' })}
+                      className="text-xs px-2 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 hover:text-primary-700">
+                      {s}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Selector de color + vista previa (solo si hay texto de etiqueta) */}
+                {draft.tag.trim() && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[11px] font-semibold text-gray-500">Color de la etiqueta</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {TAG_COLORS.map((col) => {
+                        const active = (draft.tagColor || 'primary-600') === col.value;
+                        return (
+                          <button key={col.value} type="button" title={col.label}
+                            onClick={() => patch({ tagColor: col.value })}
+                            className={`h-6 w-6 rounded-full border-2 transition-transform ${active ? 'border-gray-800 scale-110' : 'border-white shadow'}`}
+                            style={{ backgroundColor: col.css }} />
+                        );
+                      })}
+                    </div>
+                    {/* Vista previa del badge */}
+                    <div>
+                      <span
+                        className="inline-block text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border"
+                        style={tagBadgeStyle(draft.tagColor || 'primary-600')}
+                      >
+                        {draft.tag.trim()}
+                      </span>
+                      <span className="text-[11px] text-gray-400 ml-2">Así se verá en la tienda</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Fotos del combo (galería) */}

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/format';
-import { imageSrc } from '@/lib/api';
+import { imageSrc, tagBadgeStyle } from '@/lib/api';
 import type { Combo } from '@/lib/api';
 
 interface Props {
@@ -44,6 +44,16 @@ export default function ComboCard({ combo, priority = false }: Props) {
         {combo.savings > 0 && (
           <span className="absolute top-2 left-2 z-10 bg-primary-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
             -{combo.savings_percent}%
+          </span>
+        )}
+
+        {/* Etiqueta destacada (tag) */}
+        {combo.tag && (
+          <span
+            className="absolute top-2 right-2 z-10 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm border"
+            style={tagBadgeStyle(combo.tag_color)}
+          >
+            {combo.tag}
           </span>
         )}
       </div>

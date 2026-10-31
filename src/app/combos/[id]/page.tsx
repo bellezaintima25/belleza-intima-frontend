@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassPlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { api, getImageForColor, imageSrc } from '@/lib/api';
+import { api, getImageForColor, imageSrc, tagBadgeStyle } from '@/lib/api';
 import type { Combo } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
 
@@ -359,9 +359,19 @@ export default function ComboDetailPage() {
 
         {/* Detalle */}
         <div>
-          <span className="inline-block text-xs font-semibold text-primary-300 uppercase tracking-wider mb-1">
-            Combo especial
-          </span>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="inline-block text-xs font-semibold text-primary-300 uppercase tracking-wider">
+              Combo especial
+            </span>
+            {combo.tag && (
+              <span
+                className="inline-block text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border"
+                style={tagBadgeStyle(combo.tag_color)}
+              >
+                {combo.tag}
+              </span>
+            )}
+          </div>
           <h1 className="font-serif text-3xl font-semibold text-primary-700 leading-tight">{combo.name}</h1>
           {combo.description && <p className="text-gray-500 mt-2">{combo.description}</p>}
 

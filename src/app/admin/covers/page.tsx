@@ -88,7 +88,7 @@ export default function AdminHomePage() {
   const buttonLinks = useMemo(() => {
     const opts: { href: string; label: string }[] = [
       { href: '/catalogo', label: 'Catálogo (todo)' },
-      { href: '/combos', label: 'Combos (todos)' },
+      { href: '/combos', label: 'Combinaciones (todas)' },
     ];
     // Categorías que realmente existen (con productos).
     categoryKeys.forEach((cat) => {
