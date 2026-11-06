@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   ShoppingBagIcon,
   MagnifyingGlassIcon,
@@ -38,12 +38,21 @@ export default function Navbar() {
   const { count: favoritesCount } = useFavorites();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [catalogOpen, setCatalogOpen] = useState(false);
   const catalogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Categoría actual del catálogo (?category=...). Se lee de la URL del navegador
+  // en vez de useSearchParams(): ese hook obliga a envolver el Navbar en <Suspense>
+  // y rompe la generación estática de páginas como /404, porque el Navbar está en
+  // el layout de todo el sitio. Solo se necesita para resaltar la categoría en el
+  // menú móvil, así que basta con actualizarla al cambiar de ruta o abrir el menú.
+  const [currentCategory, setCurrentCategory] = useState<string | null>(null);
+  useEffect(() => {
+    setCurrentCategory(new URLSearchParams(window.location.search).get('category'));
+  }, [pathname, menuOpen]);
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -51,9 +60,8 @@ export default function Navbar() {
   const isCatActive = (href: string) => {
     const [path, q] = href.split('?');
     if (pathname !== path) return false;
-    if (!q) return !searchParams.get('category');
-    const param = new URLSearchParams(q);
-    return searchParams.get('category') === param.get('category');
+    if (!q) return !currentCategory;
+    return currentCategory === new URLSearchParams(q).get('category');
   };
 
   const openCatalog = () => {
