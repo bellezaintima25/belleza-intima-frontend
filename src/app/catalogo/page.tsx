@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon, GiftIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { api } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
@@ -71,7 +71,7 @@ function CatalogContent() {
           className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
             selected === null
               ? 'bg-primary-600 text-white border-primary-600'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'
+              : 'bg-white text-primary-700 border-primary-200 hover:bg-primary-50'
           }`}
         >
           Todo
@@ -83,7 +83,7 @@ function CatalogContent() {
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
               selected === cat
                 ? 'bg-primary-600 text-white border-primary-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'
+                : 'bg-white text-primary-700 border-primary-200 hover:bg-primary-50'
             }`}
           >
             {categoryLabel(cat)}
@@ -124,12 +124,12 @@ function CatalogContent() {
             <p>No encontramos &quot;{search}&quot;.</p>
           ) : selected === 'COMBO' ? (
             <>
-              <span className="text-5xl block mb-3">🎁</span>
+              <GiftIcon className="h-14 w-14 mx-auto mb-3 text-primary-200" />
               <p>Muy pronto tendremos combos de promoción.</p>
             </>
           ) : selected === 'PIJAMA' ? (
             <>
-              <span className="text-5xl block mb-3">🌙</span>
+              <MoonIcon className="h-14 w-14 mx-auto mb-3 text-primary-200" />
               <p>Muy pronto agregaremos pijamas a esta sección.</p>
             </>
           ) : (

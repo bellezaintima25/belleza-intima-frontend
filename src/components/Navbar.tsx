@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import {
   ShoppingBagIcon,
   MagnifyingGlassIcon,
@@ -37,18 +37,29 @@ export default function Navbar() {
   const { itemCount, openCart } = useCart();
   const { count: favoritesCount } = useFavorites();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
-  // Desplegable de categorías de "Catálogo" (desktop, hover/teclado).
   const [catalogOpen, setCatalogOpen] = useState(false);
   const catalogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+  const isCatActive = (href: string) => {
+    const [path, q] = href.split('?');
+    if (pathname !== path) return false;
+    if (!q) return !searchParams.get('category');
+    const param = new URLSearchParams(q);
+    return searchParams.get('category') === param.get('category');
+  };
 
   const openCatalog = () => {
     if (catalogTimer.current) clearTimeout(catalogTimer.current);
     setCatalogOpen(true);
   };
-  // Pequeño retardo al cerrar para poder mover el cursor hacia el menú.
   const closeCatalog = () => {
     if (catalogTimer.current) clearTimeout(catalogTimer.current);
     catalogTimer.current = setTimeout(() => setCatalogOpen(false), 150);
@@ -66,7 +77,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 bg-primary-600 border-b border-primary-700 shadow-sm text-primary-500">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4 relative">
+      <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between gap-4 relative">
         {/* Hamburger — mobile only */}
         <button
           onClick={() => setMenuOpen(true)}
@@ -80,16 +91,32 @@ export default function Navbar() {
         <Link
           href="/"
           aria-label="Belleza Íntima — Inicio"
-          className="flex items-center gap-2.5 flex-shrink-0 absolute left-1/2 -translate-x-1/2 lg:static lg:left-auto lg:translate-x-0"
+          className="group flex items-center gap-2.5 flex-shrink-0 absolute left-1/2 -translate-x-1/2 lg:static lg:left-auto lg:translate-x-0"
         >
-          <Image src="/logoB.svg" alt="Belleza Íntima" width={72} height={72} priority />
-          <span className="font-serif text-lg font-semibold text-primary-500 tracking-tight hidden xl:block">
+          <span className="relative inline-block overflow-hidden rounded-full">
+            <Image
+              src="/logoB.svg"
+              alt="Belleza Íntima"
+              width={72}
+              height={72}
+              priority
+              className="transition-transform duration-500 ease-in-out group-hover:scale-105"
+            />
+            <span
+              className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
+              style={{
+                background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.09) 50%, transparent 60%)',
+              }}
+              aria-hidden="true"
+            />
+          </span>
+          <span className="font-serif text-lg font-semibold text-primary-500 tracking-tight hidden xl:block transition-transform duration-300 group-hover:scale-105 origin-left">
             Belleza Íntima
           </span>
         </Link>
 
         {/* Nav menu — desktop */}
-        <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center">
+        <nav className="hidden lg:flex items-center gap-2 flex-1 justify-center">
           {mainLinks.map((link) =>
             link.hasDropdown ? (
               <div
@@ -100,7 +127,11 @@ export default function Navbar() {
               >
                 <Link
                   href={link.href}
-                  className="flex items-center gap-1 text-xs font-medium tracking-wide text-primary-500 hover:text-white transition-colors whitespace-nowrap"
+                  className={`flex items-center gap-1 text-xs font-medium tracking-wide transition-all whitespace-nowrap px-3 py-1.5 rounded-full ${
+                    isActive(link.href)
+                      ? 'bg-primary-50 text-primary-700 font-semibold'
+                      : 'text-primary-500 hover:bg-primary-700/40 hover:text-white'
+                  }`}
                   aria-haspopup="true"
                   aria-expanded={catalogOpen}
                   onFocus={openCatalog}
@@ -108,8 +139,6 @@ export default function Navbar() {
                   {link.label}
                   <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${catalogOpen ? 'rotate-180' : ''}`} />
                 </Link>
-
-                {/* Desplegable de categorías */}
                 <div
                   className={`absolute left-1/2 -translate-x-1/2 top-full pt-3 w-48 transition-opacity ${
                     catalogOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
@@ -133,7 +162,11 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-xs font-medium tracking-wide text-primary-500 hover:text-white transition-colors whitespace-nowrap"
+                className={`text-xs font-medium tracking-wide transition-all whitespace-nowrap px-3 py-1.5 rounded-full ${
+                  isActive(link.href)
+                    ? 'bg-primary-50 text-primary-700 font-semibold'
+                    : 'text-primary-500 hover:bg-primary-700/40 hover:text-white'
+                }`}
               >
                 {link.label}
               </Link>
@@ -141,7 +174,7 @@ export default function Navbar() {
           )}
         </nav>
 
-        {/* Search + cart */}
+        {/* Search + cart + favorites */}
         <div className="flex items-center gap-1 flex-shrink-0">
           {searchOpen ? (
             <form onSubmit={submitSearch} className="relative">
@@ -187,7 +220,6 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Favorites (me gusta) — to the right of the cart */}
           <Link
             href="/favoritos"
             className="relative p-2 text-primary-500 hover:text-white transition-colors"
@@ -204,7 +236,6 @@ export default function Navbar() {
       </div>
 
       {/* Mobile menu — slide-in drawer */}
-      {/* Overlay */}
       {menuOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
@@ -212,7 +243,6 @@ export default function Navbar() {
           aria-hidden="true"
         />
       )}
-      {/* Drawer */}
       <div
         className={`lg:hidden fixed top-0 left-0 h-full w-72 max-w-[80%] bg-white z-50 shadow-2xl transform transition-transform duration-300 ${
           menuOpen ? 'translate-x-0' : '-translate-x-full'
@@ -240,11 +270,14 @@ export default function Navbar() {
               <Link
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="block px-5 py-3 text-sm font-medium tracking-wide text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors border-b border-gray-50"
+                className={`block px-5 py-3 text-sm font-medium tracking-wide transition-colors border-b border-gray-50 ${
+                  isActive(link.href)
+                    ? 'bg-primary-50 text-primary-700 font-semibold'
+                    : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
+                }`}
               >
                 {link.label}
               </Link>
-              {/* Bajo "Catálogo": categorías indentadas (en móvil no hay hover). */}
               {link.hasDropdown && (
                 <div className="bg-gray-50/60">
                   {catalogCategories.filter((c) => c.label !== 'Ver todo').map((cat) => (
@@ -252,7 +285,11 @@ export default function Navbar() {
                       key={cat.label}
                       href={cat.href}
                       onClick={() => setMenuOpen(false)}
-                      className="block pl-9 pr-5 py-2.5 text-sm text-gray-500 hover:bg-primary-50 hover:text-primary-600 transition-colors border-b border-gray-50"
+                      className={`block pl-9 pr-5 py-2.5 text-sm transition-colors border-b border-gray-50 ${
+                        isCatActive(cat.href)
+                          ? 'bg-primary-100 text-primary-700 font-semibold'
+                          : 'text-gray-500 hover:bg-primary-50 hover:text-primary-600'
+                      }`}
                     >
                       {cat.label}
                     </Link>

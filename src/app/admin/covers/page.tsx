@@ -1,6 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
+  StarIcon,
+} from '@heroicons/react/24/outline';
+import AlignIcon from '@/components/admin/AlignIcon';
 import Image from 'next/image';
 import { adminApi } from '@/lib/adminApi';
 import type { HeroContent, HeroPhrase, HeroButton, HeroVersion, Combo } from '@/lib/adminApi';
@@ -402,26 +410,26 @@ export default function AdminHomePage() {
                         {/* Alineación del texto */}
                         <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 p-0.5">
                           {([
-                            { v: 'left', label: '⬅', title: 'Izquierda' },
-                            { v: 'center', label: '⬌', title: 'Centrar' },
-                            { v: 'right', label: '➡', title: 'Derecha' },
+                            { v: 'left', title: 'Izquierda' },
+                            { v: 'center', title: 'Centrar' },
+                            { v: 'right', title: 'Derecha' },
                           ] as const).map((opt) => (
                             <button
                               key={opt.v}
                               type="button"
                               title={opt.title}
                               onClick={() => updatePhrase(i, { align: opt.v })}
-                              className={`h-6 w-6 rounded text-xs ${
+                              className={`h-6 w-6 rounded text-xs flex items-center justify-center ${
                                 (p.align ?? 'left') === opt.v ? 'bg-primary-600 text-white' : 'text-gray-500 hover:bg-gray-100'
                               }`}
                             >
-                              {opt.label}
+                              <AlignIcon variant={opt.v} />
                             </button>
                           ))}
                         </div>
                         {/* Tamaño del texto (px) — por dispositivo en modo libre */}
                         <label className="flex items-center gap-1 text-xs text-gray-500" title="Tamaño del texto en píxeles (por dispositivo)">
-                          <span>Tamaño{hero.layout === 'free' ? (editDevice === 'mobile' ? ' 📱' : ' 🖥️') : ''}</span>
+                          <span className="inline-flex items-center gap-1">Tamaño{hero.layout === 'free' && (editDevice === 'mobile' ? <DevicePhoneMobileIcon className="h-3.5 w-3.5" aria-label="móvil" /> : <ComputerDesktopIcon className="h-3.5 w-3.5" aria-label="escritorio" />)}</span>
                           <button
                             type="button"
                             title="Reducir"
@@ -488,8 +496,8 @@ export default function AdminHomePage() {
                           );
                         })()}
                         <div className="ml-auto flex items-center gap-1">
-                          <button onClick={() => movePhrase(i, -1)} disabled={i === 0} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Subir">↑</button>
-                          <button onClick={() => movePhrase(i, 1)} disabled={i === hero.phrases.length - 1} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Bajar">↓</button>
+                          <button onClick={() => movePhrase(i, -1)} disabled={i === 0} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30 flex items-center justify-center" title="Subir" aria-label="Subir"><ArrowUpIcon className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => movePhrase(i, 1)} disabled={i === hero.phrases.length - 1} className="h-6 w-6 rounded border border-gray-200 text-gray-500 disabled:opacity-30 flex items-center justify-center" title="Bajar" aria-label="Bajar"><ArrowDownIcon className="h-3.5 w-3.5" /></button>
                           <button onClick={() => removePhrase(i)} className="h-6 px-2 rounded border border-rose-200 text-rose-500 text-xs" title="Eliminar frase">Quitar</button>
                         </div>
                       </div>
@@ -571,7 +579,7 @@ export default function AdminHomePage() {
                 <p className="text-sm font-semibold text-gray-700 mb-2">Imagen de fondo</p>
 
                 {/* Fondo escritorio */}
-                <p className="text-[11px] font-semibold text-gray-400 mb-1">🖥️ Fondo escritorio</p>
+                <p className="flex items-center gap-1 text-[11px] font-semibold text-gray-400 mb-1"><ComputerDesktopIcon className="h-3.5 w-3.5" /> Fondo escritorio</p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <input ref={bgInput} type="file" accept="image/*" className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'bg'); e.target.value=''; }} />
@@ -601,7 +609,7 @@ export default function AdminHomePage() {
                 {!hero.background.image_url && (
                   <div className="mt-2 rounded-lg bg-gray-50 border border-gray-100 p-2.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-semibold text-gray-600">Color de fondo 🖥️</span>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600">Color de fondo <ComputerDesktopIcon className="h-3.5 w-3.5" aria-label="escritorio" /></span>
                       <ColorPicker
                         value={hero.background.color ?? ''}
                         onChange={(v) => setHero((h) => ({ ...h, background: { ...h.background, color: v } }))}
@@ -618,7 +626,7 @@ export default function AdminHomePage() {
                 )}
 
                 {/* Fondo móvil */}
-                <p className="text-[11px] font-semibold text-gray-400 mb-1 mt-4">📱 Fondo móvil (opcional; si está vacío usa el de escritorio)</p>
+                <p className="flex items-center gap-1 text-[11px] font-semibold text-gray-400 mb-1 mt-4"><DevicePhoneMobileIcon className="h-3.5 w-3.5" /> Fondo móvil (opcional; si está vacío usa el de escritorio)</p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <input ref={bgMobileInput} type="file" accept="image/*" className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'bg_mobile'); e.target.value=''; }} />
@@ -648,7 +656,7 @@ export default function AdminHomePage() {
                 {!hero.background.image_url_mobile && !hero.background.image_url && (
                   <div className="mt-2 rounded-lg bg-gray-50 border border-gray-100 p-2.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-semibold text-gray-600">Color de fondo 📱</span>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600">Color de fondo <DevicePhoneMobileIcon className="h-3.5 w-3.5" aria-label="móvil" /></span>
                       <ColorPicker
                         value={hero.background.color_mobile ?? ''}
                         onChange={(v) => setHero((h) => ({ ...h, background: { ...h.background, color_mobile: v } }))}
@@ -753,16 +761,16 @@ export default function AdminHomePage() {
                     <button
                       type="button"
                       onClick={() => setEditDevice('desktop')}
-                      className={`text-xs font-semibold px-3 py-1 rounded ${editDevice === 'desktop' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded ${editDevice === 'desktop' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                     >
-                      🖥️ Escritorio
+                      <ComputerDesktopIcon className="h-4 w-4" /> Escritorio
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditDevice('mobile')}
-                      className={`text-xs font-semibold px-3 py-1 rounded ${editDevice === 'mobile' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded ${editDevice === 'mobile' ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                     >
-                      📱 Móvil
+                      <DevicePhoneMobileIcon className="h-4 w-4" /> Móvil
                     </button>
                   </div>
                 </div>
@@ -779,14 +787,14 @@ export default function AdminHomePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-start">
                     {/* Escritorio */}
                     <div>
-                      <p className="text-[11px] text-gray-400 mb-1">🖥️ Escritorio</p>
+                      <p className="flex items-center gap-1 text-[11px] text-gray-400 mb-1"><ComputerDesktopIcon className="h-3.5 w-3.5" /> Escritorio</p>
                       <div className="rounded-xl ring-1 ring-primary-100/60 overflow-hidden">
                         <HeroFreeView hero={hero} device="desktop" interactive />
                       </div>
                     </div>
                     {/* Móvil */}
                     <div>
-                      <p className="text-[11px] text-gray-400 mb-1">📱 Móvil</p>
+                      <p className="flex items-center gap-1 text-[11px] text-gray-400 mb-1"><DevicePhoneMobileIcon className="h-3.5 w-3.5" /> Móvil</p>
                       <div className="w-[240px] rounded-xl ring-1 ring-primary-100/60 overflow-hidden bg-white">
                         <HeroFreeView hero={hero} device="mobile" interactive />
                       </div>
@@ -808,8 +816,8 @@ export default function AdminHomePage() {
               {pinned && (
                 <div className="bg-white rounded-2xl border-2 border-amber-300 shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-500 text-white px-2 py-0.5 rounded-full">
-                      ★ Versión principal
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-amber-500 text-white px-2 py-0.5 rounded-full">
+                      <StarIcon className="h-3 w-3" /> Versión principal
                     </span>
                     {pinned.is_current && (
                       <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">

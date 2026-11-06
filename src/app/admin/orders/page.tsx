@@ -1,5 +1,7 @@
 'use client';
 
+import { GiftIcon, XMarkIcon, ArchiveBoxIcon, MagnifyingGlassIcon, CheckIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminOrder, PaymentStatus, AdminProduct } from '@/lib/adminApi';
@@ -84,6 +86,7 @@ export default function AdminOrdersPage() {
   // Edición de datos del cliente (nombre / teléfono) del pedido en edición.
   const [custName, setCustName] = useState('');
   const [custPhone, setCustPhone] = useState('');
+  const [custCity, setCustCity] = useState('');
 
   // --- Filtros ---
   const [filterText, setFilterText] = useState('');            // cliente: nombre o teléfono
@@ -147,15 +150,16 @@ export default function AdminOrdersPage() {
   const saveCustomer = async (order: AdminOrder) => {
     const name = custName.trim();
     const phone = custPhone.trim();
+    const city = custCity.trim();
     if (!name || !phone) {
       setError('El nombre y el teléfono no pueden estar vacíos.');
       return;
     }
-    if (name === order.customer_name && phone === order.customer_phone) return;
+    if (name === order.customer_name && phone === order.customer_phone && city === (order.customer_city ?? '')) return;
     setError(null);
     setSavingId(order.id);
     try {
-      replaceOrder(await adminApi.orders.updateCustomer(order.id, { customer_name: name, customer_phone: phone }));
+      replaceOrder(await adminApi.orders.updateCustomer(order.id, { customer_name: name, customer_phone: phone, customer_city: city }));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudieron actualizar los datos del cliente.');
     } finally {
@@ -286,7 +290,7 @@ export default function AdminOrdersPage() {
       {error && (
         <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-start justify-between gap-3">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-600" aria-label="Cerrar aviso">✕</button>
+          <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-600" aria-label="Cerrar aviso"><XMarkIcon className="h-4 w-4" /></button>
         </div>
       )}
 
@@ -373,12 +377,12 @@ export default function AdminOrdersPage() {
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <span className="text-5xl block mb-3">📦</span>
+          <ArchiveBoxIcon className="h-14 w-14 mx-auto mb-3 text-primary-200" />
           <p>Aún no hay pedidos.</p>
         </div>
       ) : visibleOrders.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <span className="text-4xl block mb-3">🔍</span>
+          <MagnifyingGlassIcon className="h-12 w-12 mx-auto mb-3 text-primary-200" />
           <p>Ningún pedido coincide con los filtros.</p>
           <button
             onClick={clearFilters}
@@ -422,11 +426,15 @@ export default function AdminOrdersPage() {
                         className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full"
                         title={order.combo_name ? `Combo: ${order.combo_name}` : 'Pedido de combo'}
                       >
-                        🎁 Combo
+                        <GiftIcon className="h-3 w-3" />
+                        Combo
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400">{order.customer_phone}</p>
+                  <p className="text-xs text-gray-400">
+                    {order.customer_phone}
+                    {order.customer_city ? ` · ${order.customer_city}` : ''}
+                  </p>
                   <p className="text-xs font-semibold text-gray-500 nums mt-0.5">{orderNumber(order.id)}</p>
                 </div>
 
@@ -537,11 +545,22 @@ export default function AdminOrdersPage() {
                             className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
                           />
                         </label>
+                        <label className="flex flex-col text-xs text-gray-500">
+                          Ciudad
+                          <input
+                            type="text"
+                            value={custCity}
+                            onChange={(e) => setCustCity(e.target.value)}
+                            className="mt-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                          />
+                        </label>
                         <button
                           onClick={() => saveCustomer(order)}
                           disabled={
                             savingId === order.id ||
-                            (custName.trim() === order.customer_name && custPhone.trim() === order.customer_phone)
+                            (custName.trim() === order.customer_name &&
+                              custPhone.trim() === order.customer_phone &&
+                              custCity.trim() === (order.customer_city ?? ''))
                           }
                           className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
                         >
@@ -668,8 +687,9 @@ export default function AdminOrdersPage() {
                     </div>
                   )}
                   {order.combo_id && (
-                    <p className="text-xs text-primary-700 mt-3">
-                      🎁 Pedido generado desde el combo{order.combo_name ? `: ${order.combo_name}` : ''}.
+                    <p className="flex items-center gap-1.5 text-xs text-primary-700 mt-3">
+                      <GiftIcon className="h-4 w-4 flex-shrink-0" />
+                      <span>Pedido generado desde el combo{order.combo_name ? `: ${order.combo_name}` : ''}.</span>
                     </p>
                   )}
                   {order.sent_at && (
@@ -696,6 +716,7 @@ export default function AdminOrdersPage() {
                             // Al entrar en edición, precargar datos del cliente.
                             setCustName(order.customer_name);
                             setCustPhone(order.customer_phone);
+                            setCustCity(order.customer_city ?? '');
                           }
                           return cur === order.id ? null : order.id;
                         })
@@ -707,7 +728,11 @@ export default function AdminOrdersPage() {
                           : 'text-gray-500 hover:text-primary-600'
                       }`}
                     >
-                      {editing === order.id ? '✓ Terminar edición' : '✎ Modificar pedido'}
+                      {editing === order.id ? (
+                        <span className="inline-flex items-center gap-1"><CheckIcon className="h-3.5 w-3.5" /> Terminar edición</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1"><PencilSquareIcon className="h-3.5 w-3.5" /> Modificar pedido</span>
+                      )}
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(order)}

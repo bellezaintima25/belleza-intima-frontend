@@ -1,14 +1,22 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ReactNode } from 'react';
+import {
+  ChartBarIcon,
+  TagIcon,
+  PhotoIcon,
+  GiftIcon,
+  ChatBubbleLeftRightIcon,
+  ArchiveBoxIcon,
+} from '@heroicons/react/24/outline';
 
 const navItems = [
-  { href: '/admin', label: 'Panel', emoji: '📊' },
-  { href: '/admin/products', label: 'Productos', emoji: '👗' },
-  { href: '/admin/covers', label: 'Página de inicio', emoji: '🖼️' },
-  { href: '/admin/combos', label: 'Combos', emoji: '🎁' },
-  { href: '/admin/testimonios', label: 'Testimonios', emoji: '💬' },
-  { href: '/admin/orders', label: 'Pedidos', emoji: '📦' },
+  { href: '/admin', label: 'Panel', Icon: ChartBarIcon },
+  { href: '/admin/products', label: 'Productos', Icon: TagIcon },
+  { href: '/admin/covers', label: 'Página de inicio', Icon: PhotoIcon },
+  { href: '/admin/combos', label: 'Combos', Icon: GiftIcon },
+  { href: '/admin/testimonios', label: 'Testimonios', Icon: ChatBubbleLeftRightIcon },
+  { href: '/admin/orders', label: 'Pedidos', Icon: ArchiveBoxIcon },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -58,7 +66,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-primary-50 hover:text-primary-700 transition-colors"
               >
-                <span>{item.emoji}</span>
+                <item.Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                 {item.label}
               </Link>
             ))}
@@ -73,7 +81,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               href={item.href}
               className="flex-1 flex flex-col items-center gap-0.5 py-2 text-xs font-medium text-gray-600 hover:bg-primary-50 hover:text-primary-700 transition-colors"
             >
-              <span className="text-base">{item.emoji}</span>
+              <item.Icon className="h-5 w-5" aria-hidden="true" />
               {item.label}
             </Link>
           ))}

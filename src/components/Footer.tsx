@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronUpIcon } from '@heroicons/react/24/outline';
+import { WHATSAPP_URL } from '@/lib/contact';
 
 export default function Footer({ compact = false }: { compact?: boolean }) {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -73,7 +74,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
             <div className="flex items-start justify-center sm:justify-start gap-6">
               {/* WhatsApp */}
               <a
-                href="https://wa.me/573217795555"
+                href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"

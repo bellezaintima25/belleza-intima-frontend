@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { ArrowUpIcon, ArrowDownIcon, UserIcon } from '@heroicons/react/24/outline';
+import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import { adminApi } from '@/lib/adminApi';
 import type { Testimonial, TestimonialInput } from '@/lib/adminApi';
@@ -28,7 +30,7 @@ function Stars({ value, onChange }: { value: number; onChange?: (v: number) => v
           className={`text-lg ${onChange ? 'cursor-pointer' : 'cursor-default'} ${n <= value ? 'text-amber-400' : 'text-gray-300'}`}
           aria-label={`${n} estrella${n > 1 ? 's' : ''}`}
         >
-          ★
+          <StarIcon className="h-6 w-6" />
         </button>
       ))}
     </div>
@@ -193,7 +195,7 @@ export default function AdminTestimonialsPage() {
                   <Image src={imageSrc(draft.photo_url)} alt="" fill sizes="64px" className="object-cover" />
                 ) : (
                   <span className="text-xl text-primary-300 font-serif">
-                    {draft.customer_name.trim().charAt(0).toUpperCase() || '✿'}
+                    {draft.customer_name.trim().charAt(0).toUpperCase() || <UserIcon className="h-6 w-6 text-primary-300" aria-hidden="true" />}
                   </span>
                 )}
               </div>
@@ -282,8 +284,8 @@ export default function AdminTestimonialsPage() {
               {/* Acciones */}
               <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <div className="flex items-center gap-1">
-                  <button onClick={() => move(idx, -1)} disabled={idx === 0} className="h-7 w-7 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Subir">↑</button>
-                  <button onClick={() => move(idx, 1)} disabled={idx === items.length - 1} className="h-7 w-7 rounded border border-gray-200 text-gray-500 disabled:opacity-30" title="Bajar">↓</button>
+                  <button onClick={() => move(idx, -1)} disabled={idx === 0} className="h-7 w-7 rounded border border-gray-200 text-gray-500 disabled:opacity-30 flex items-center justify-center" title="Subir" aria-label="Subir"><ArrowUpIcon className="h-4 w-4" /></button>
+                  <button onClick={() => move(idx, 1)} disabled={idx === items.length - 1} className="h-7 w-7 rounded border border-gray-200 text-gray-500 disabled:opacity-30 flex items-center justify-center" title="Bajar" aria-label="Bajar"><ArrowDownIcon className="h-4 w-4" /></button>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => startEdit(t)} className="text-xs font-semibold text-primary-700 border border-primary-200 hover:bg-primary-50 px-3 py-1.5 rounded-lg">Editar</button>

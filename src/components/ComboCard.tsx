@@ -1,5 +1,7 @@
 'use client';
 
+import { GiftIcon } from '@heroicons/react/24/outline';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/format';
@@ -21,7 +23,9 @@ export default function ComboCard({ combo, priority = false }: Props) {
   return (
     <Link
       href={`/combos/${combo.id}`}
-      className="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-gray-100 transition-shadow"
+      className="group block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-1"
+      onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 20px 40px -8px rgba(139,26,58,0.15)'}
+      onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = ''}
     >
       {/* Imagen */}
       <div className="aspect-[3/4] relative bg-gradient-to-br from-primary-50 to-primary-100">
@@ -36,7 +40,7 @@ export default function ComboCard({ combo, priority = false }: Props) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-5xl">🎁</span>
+            <GiftIcon className="h-12 w-12 text-primary-300" />
           </div>
         )}
 

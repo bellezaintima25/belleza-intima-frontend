@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { StarIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import Image from 'next/image';
 import { api, imageSrc } from '@/lib/api';
@@ -11,7 +12,6 @@ import ProductCard from '@/components/ProductCard';
 import ComboCard from '@/components/ComboCard';
 import TopBar from '@/components/TopBar';
 import CategoryCarousel from '@/components/CategoryCarousel';
-import { categoryLabel } from '@/lib/format';
 
 const DEFAULT_CATEGORIES = [
   { key: 'SET', image: '/images/ST005-Azul-claro-1.jpeg' },
@@ -34,6 +34,41 @@ const DEFAULT_HERO: HeroContent = {
   logo_url: '/logo.svg',
 };
 
+/** Título de sección con separador decorativo */
+function SectionTitle({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'center' }) {
+  return (
+    <div className={align === 'center' ? 'text-center' : ''}>
+      <h2 className="font-serif text-2xl font-semibold text-primary-700">{children}</h2>
+    </div>
+  );
+}
+
+/** Sección con fade-in al entrar en el viewport */
+function FadeInSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+
 export default function HomePage() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [specials, setSpecials] = useState<Product[]>([]);
@@ -44,14 +79,12 @@ export default function HomePage() {
   const [hero, setHero] = useState<HeroContent>(DEFAULT_HERO);
 
   useEffect(() => {
-    // Contenido del hero gestionado por el admin; fallback a los valores por defecto.
     api.site.hero()
       .then((h) => { if (h) setHero(h); })
       .catch(() => null);
   }, []);
 
   useEffect(() => {
-    // Load admin-managed cover images; fall back to defaults on any error.
     api.categories.covers()
       .then((covers) => {
         if (!covers || covers.length === 0) return;
@@ -67,8 +100,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Prefer admin-selected featured products; fall back to the first few
-    // products so the section is never empty if none are marked yet.
     api.products.featured()
       .then((featuredProducts) => {
         if (featuredProducts.length > 0) {
@@ -82,21 +113,18 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Productos en descuento para la sección "Encantos especiales".
     api.products.onSale()
       .then((p) => setSpecials(p.slice(0, 4)))
       .catch(() => null);
   }, []);
 
   useEffect(() => {
-    // Combos activos para la sección "Un mundo de combinaciones".
     api.combos.list()
       .then((c) => setCombos(c.slice(0, 4)))
       .catch(() => null);
   }, []);
 
   useEffect(() => {
-    // Testimonios activos para la sección "Momentos Belleza Íntima".
     api.testimonials.list()
       .then((t) => setTestimonials(t.slice(0, 6)))
       .catch(() => null);
@@ -108,7 +136,6 @@ export default function HomePage() {
       <section className="bg-gradient-to-b from-primary-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           <div className="relative bg-white rounded-3xl shadow-xl ring-1 ring-primary-100/60 overflow-hidden">
-            {/* Imagen de fondo opcional con oscurecido para legibilidad */}
             {hero.background.image_url && (
               <>
                 <Image
@@ -126,9 +153,7 @@ export default function HomePage() {
                 />
               </>
             )}
-
             {hero.layout === 'free' ? (
-              /* ---- Modo libre: lienzo escalado en escritorio, clásico apilado en móvil ---- */
               <>
                 <div className="hidden md:block">
                   <HeroFreeView hero={hero} device="desktop" />
@@ -144,22 +169,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Scene divider — info bar right above the categories */}
+      {/* TopBar */}
       <TopBar />
 
       {/* Categories */}
-      <section className="max-w-6xl mx-auto px-4 py-14">
-        <h2 className="font-serif text-2xl font-semibold text-primary-700 text-center mb-8">
-          Explora por categoría
-        </h2>
-        {/* Mobile: arrow-driven carousel · Desktop: 4-column grid */}
+      <FadeInSection className="max-w-6xl mx-auto px-4 py-14">
+        <div className="mb-8">
+          <SectionTitle align="center">Explora por categoría</SectionTitle>
+        </div>
         <CategoryCarousel categories={categories} />
-      </section>
+      </FadeInSection>
 
       {/* Featured products */}
-      <section className="max-w-6xl mx-auto px-4 pb-16">
+      <FadeInSection className="max-w-6xl mx-auto px-4 pb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="font-serif text-2xl font-semibold text-primary-700">Los productos más amados</h2>
+          <SectionTitle>Los productos más amados</SectionTitle>
           <Link href="/catalogo" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
             Ver todo →
           </Link>
@@ -183,13 +207,13 @@ export default function HomePage() {
             ))}
           </div>
         ) : null}
-      </section>
+      </FadeInSection>
 
-      {/* Encantos especiales (productos en descuento) — solo si hay */}
+      {/* Encantos especiales */}
       {specials.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 pb-16">
+        <FadeInSection className="max-w-6xl mx-auto px-4 pb-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="font-serif text-2xl font-semibold text-primary-700">Encantos especiales</h2>
+            <SectionTitle>Encantos especiales</SectionTitle>
             <Link href="/especiales" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
               Ver todo →
             </Link>
@@ -199,14 +223,14 @@ export default function HomePage() {
               <ProductCard key={p.id} product={p} priority={i < 4} />
             ))}
           </div>
-        </section>
+        </FadeInSection>
       )}
 
-      {/* Un mundo de combinaciones (combos) — solo si hay */}
+      {/* Un mundo de combinaciones */}
       {combos.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 pb-16">
+        <FadeInSection className="max-w-6xl mx-auto px-4 pb-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="font-serif text-2xl font-semibold text-primary-700">Un mundo de combinaciones</h2>
+            <SectionTitle>Un mundo de combinaciones</SectionTitle>
             <Link href="/combos" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
               Ver todo →
             </Link>
@@ -216,29 +240,26 @@ export default function HomePage() {
               <ComboCard key={c.id} combo={c} priority={i < 4} />
             ))}
           </div>
-        </section>
+        </FadeInSection>
       )}
 
-      {/* Momentos Belleza Íntima (testimonios) — solo si hay */}
+      {/* Momentos Belleza Íntima */}
       {testimonials.length > 0 && (
-        <section className="bg-primary-50/60">
+        <FadeInSection className="bg-primary-50/60">
           <div className="max-w-6xl mx-auto px-4 py-16">
             <div className="text-center mb-10">
-              <h2 className="font-serif text-3xl font-semibold text-primary-700 mb-2">Momentos Belleza Íntima</h2>
-              <p className="text-gray-500">Lo que viven y sienten nuestras clientas.</p>
+              <SectionTitle align="center">Momentos Belleza Íntima</SectionTitle>
+              <p className="text-gray-500 mt-3">Lo que sienten quienes se atreven a sentirse bien.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {testimonials.map((t) => (
                 <figure key={t.id} className="bg-white rounded-2xl shadow-sm ring-1 ring-primary-100/60 p-5 flex flex-col">
-                  {/* Estrellas */}
                   <div className="flex items-center gap-0.5 mb-3" aria-label={`${t.rating} de 5 estrellas`}>
                     {[1, 2, 3, 4, 5].map((n) => (
-                      <span key={n} className={n <= t.rating ? 'text-amber-400' : 'text-gray-200'}>★</span>
+                      <StarIcon key={n} className={`h-4 w-4 ${n <= t.rating ? 'text-amber-400' : 'text-gray-200'}`} aria-hidden="true" />
                     ))}
                   </div>
-                  {/* Texto */}
-                  <blockquote className="text-gray-600 text-sm leading-relaxed flex-1">“{t.text}”</blockquote>
-                  {/* Autora */}
+                  <blockquote className="text-gray-600 text-sm leading-relaxed flex-1">&ldquo;{t.text}&rdquo;</blockquote>
                   <figcaption className="mt-4 flex items-center gap-3">
                     <div className="relative h-10 w-10 rounded-full overflow-hidden bg-primary-100 flex-shrink-0 flex items-center justify-center">
                       {t.photo_url ? (
@@ -253,26 +274,26 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        </section>
+        </FadeInSection>
       )}
 
       {/* Brand teaser */}
-      <section className="bg-primary-50">
+      <FadeInSection className="bg-primary-50">
         <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-          <h2 className="font-serif text-3xl font-semibold text-primary-700 mb-3">Hecho con amor</h2>
-          <p className="text-gray-600 leading-relaxed max-w-2xl mx-auto">
-            En Belleza Íntima creemos que cada mujer merece sentirse hermosa y segura.
+          <SectionTitle align="center">Hecho con amor</SectionTitle>
+          <p className="text-gray-600 leading-relaxed max-w-2xl mx-auto mt-4">
+            En Belleza Íntima creemos que cada persona merece sentirse hermosa y segura.
             Seleccionamos cada prenda con cuidado, pensando en la calidad, el detalle y
             tu comodidad.
           </p>
           <Link
             href="/nuestra-marca"
-            className="inline-block mt-6 text-primary-700 font-semibold hover:underline"
+            className="inline-block mt-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-full transition-colors shadow-sm hover:shadow-md"
           >
-            Conoce más sobre nosotras →
+            Conoce más sobre nosotras
           </Link>
         </div>
-      </section>
+      </FadeInSection>
     </div>
   );
 }

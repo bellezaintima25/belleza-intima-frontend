@@ -1,6 +1,7 @@
 'use client';
 
 import { TruckIcon, ShieldCheckIcon, GiftIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { WHATSAPP_URL } from '@/lib/contact';
 
 const items = [
   { icon: TruckIcon, label: 'Envíos a toda Colombia' },
@@ -9,7 +10,7 @@ const items = [
   {
     icon: ChatBubbleLeftRightIcon,
     label: '¿Necesitas ayuda?',
-    href: 'https://wa.me/573217795555',
+    href: WHATSAPP_URL,
   },
 ];
 

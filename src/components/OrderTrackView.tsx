@@ -1,14 +1,22 @@
 'use client';
 
+import {
+  GiftIcon,
+  ClipboardDocumentListIcon,
+  CreditCardIcon,
+  TruckIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/outline';
+
 import type { OrderTrack, PaymentStatus } from '@/lib/api';
 import { formatPrice, orderNumber } from '@/lib/format';
 
 // Pasos de la línea de tiempo (en orden). CANCELADO se trata aparte.
-const STEPS: { key: PaymentStatus; label: string; emoji: string }[] = [
-  { key: 'PENDIENTE', label: 'Pedido recibido', emoji: '📝' },
-  { key: 'PAGADO', label: 'Pago confirmado', emoji: '💳' },
-  { key: 'ENVIADO', label: 'Enviado', emoji: '📦' },
-  { key: 'ENTREGADO', label: 'Entregado', emoji: '🎉' },
+const STEPS: { key: PaymentStatus; label: string; Icon: typeof GiftIcon }[] = [
+  { key: 'PENDIENTE', label: 'Pedido recibido', Icon: ClipboardDocumentListIcon },
+  { key: 'PAGADO', label: 'Pago confirmado', Icon: CreditCardIcon },
+  { key: 'ENVIADO', label: 'Enviado', Icon: TruckIcon },
+  { key: 'ENTREGADO', label: 'Entregado', Icon: CheckCircleIcon },
 ];
 
 function stepIndex(status: PaymentStatus): number {
@@ -38,9 +46,15 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
           <p className="text-xs text-gray-400 uppercase tracking-wide">Pedido</p>
           <p className="text-xl font-bold text-gray-800 nums">{orderNumber(order.id)}</p>
           <p className="text-xs text-gray-400 mt-0.5">A nombre de {order.customer_name}</p>
+          {order.customer_city && (
+            <p className="text-xs text-gray-400">Ciudad: {order.customer_city}</p>
+          )}
           <p className="text-xs text-gray-400">Realizado el {fmtDate(order.created_at)}</p>
           {order.combo_name && (
-            <p className="text-xs text-primary-600 mt-1">🎁 Combo: {order.combo_name}</p>
+            <p className="flex items-center gap-1.5 text-xs text-primary-600 mt-1">
+              <GiftIcon className="h-3.5 w-3.5 flex-shrink-0" />
+              Combo: {order.combo_name}
+            </p>
           )}
         </div>
         <div className="text-right">
@@ -74,7 +88,7 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
                     done ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-400'
                   } ${current ? 'ring-4 ring-primary-100' : ''}`}
                 >
-                  {step.emoji}
+                  <step.Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className={`mt-1.5 text-[11px] text-center leading-tight ${done ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
                   {step.label}

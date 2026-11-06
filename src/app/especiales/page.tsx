@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { TagIcon } from '@heroicons/react/24/outline';
 import { api } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
@@ -46,7 +47,7 @@ export default function EspecialesPage() {
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <span className="text-5xl block mb-3">🏷️</span>
+          <TagIcon className="h-14 w-14 mx-auto mb-3 text-primary-200" />
           <p>Por ahora no hay productos en descuento.</p>
         </div>
       ) : (

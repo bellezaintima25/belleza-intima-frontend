@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminProduct, Combo, ComboInput, ComboPricingMode, ComboImageOut } from '@/lib/adminApi';
@@ -504,11 +505,11 @@ export default function AdminCombosPage() {
                             )}
                             <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/45 px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button type="button" onClick={() => moveGalleryImage(idx, -1)} disabled={galleryBusy || idx === 0}
-                                title="Mover antes" className="text-white text-xs px-1 disabled:opacity-30">←</button>
+                                title="Mover antes" aria-label="Mover antes" className="text-white px-1 disabled:opacity-30"><ArrowLeftIcon className="h-3.5 w-3.5" /></button>
                               <button type="button" onClick={() => deleteGalleryImage(im.id)} disabled={galleryBusy}
-                                title="Eliminar" className="text-white text-xs px-1">🗑</button>
+                                title="Eliminar" aria-label="Eliminar" className="text-white px-1"><TrashIcon className="h-3.5 w-3.5" /></button>
                               <button type="button" onClick={() => moveGalleryImage(idx, 1)} disabled={galleryBusy || idx === gallery.length - 1}
-                                title="Mover después" className="text-white text-xs px-1 disabled:opacity-30">→</button>
+                                title="Mover después" aria-label="Mover después" className="text-white px-1 disabled:opacity-30"><ArrowRightIcon className="h-3.5 w-3.5" /></button>
                             </div>
                           </div>
                         ))}
@@ -637,7 +638,9 @@ export default function AdminCombosPage() {
                               <p className="text-xs text-gray-400">{p.code} · {formatPrice(p.base_price)}</p>
                             </div>
                             <span className={`text-xs font-semibold ${already ? 'text-emerald-600' : 'text-primary-600'}`}>
-                              {already ? '✓ Añadido · +1' : '+ Añadir'}
+                              {already ? (
+                                <span className="inline-flex items-center gap-1"><CheckIcon className="h-3.5 w-3.5" /> Añadido · +1</span>
+                              ) : '+ Añadir'}
                             </span>
                           </button>
                         );
@@ -748,10 +751,10 @@ export default function AdminCombosPage() {
                   <span className="bg-black/55 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">#{idx + 1}</span>
                   <button type="button" onClick={() => moveCombo(idx, -1)} disabled={idx === 0}
                     title="Subir" aria-label="Subir"
-                    className="h-6 w-6 rounded-full bg-white/85 hover:bg-white shadow flex items-center justify-center text-gray-700 text-xs disabled:opacity-30 disabled:cursor-not-allowed">↑</button>
+                    className="h-6 w-6 rounded-full bg-white/85 hover:bg-white shadow flex items-center justify-center text-gray-700 text-xs disabled:opacity-30 disabled:cursor-not-allowed"><ArrowUpIcon className="h-3.5 w-3.5" /></button>
                   <button type="button" onClick={() => moveCombo(idx, 1)} disabled={idx === combos.length - 1}
                     title="Bajar" aria-label="Bajar"
-                    className="h-6 w-6 rounded-full bg-white/85 hover:bg-white shadow flex items-center justify-center text-gray-700 text-xs disabled:opacity-30 disabled:cursor-not-allowed">↓</button>
+                    className="h-6 w-6 rounded-full bg-white/85 hover:bg-white shadow flex items-center justify-center text-gray-700 text-xs disabled:opacity-30 disabled:cursor-not-allowed"><ArrowDownIcon className="h-3.5 w-3.5" /></button>
                 </div>
                 <span className={`absolute top-2 right-2 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
                   c.active ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'

@@ -1,3 +1,5 @@
+import { apiFetch, readApiError } from './apiError';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 /**
@@ -62,6 +64,7 @@ export interface OrderItem {
 export interface OrderCreate {
   customer_name: string;
   customer_phone: string;
+  customer_city?: string;
   items: OrderItem[];
 }
 
@@ -69,6 +72,7 @@ export interface OrderOut {
   id: number;
   customer_name: string;
   customer_phone: string;
+  customer_city?: string | null;
   status: 'PENDING' | 'SENT';
   created_at: string;
   sent_at: string | null;
@@ -99,6 +103,7 @@ export interface OrderTrack {
   id: number;
   token: string;
   customer_name: string;
+  customer_city?: string | null;
   status: 'PENDING' | 'SENT';
   payment_status: PaymentStatus;
   created_at: string;
@@ -231,13 +236,12 @@ export interface Testimonial {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await apiFetch(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(error || res.statusText);
+    throw new Error(await readApiError(res));
   }
   return res.json() as Promise<T>;
 }

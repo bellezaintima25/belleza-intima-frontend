@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassPlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassPlusIcon, XMarkIcon, GiftIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { api, getImageForColor, imageSrc, tagBadgeStyle } from '@/lib/api';
 import type { Combo } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
@@ -140,7 +140,7 @@ export default function ComboDetailPage() {
   if (error || !combo) {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <span className="text-5xl block mb-4">🎁</span>
+        <GiftIcon className="h-14 w-14 mx-auto mb-4 text-primary-200" />
         <p className="text-gray-500 mb-4">{error ?? 'Combo no encontrado.'}</p>
         <Link href="/combos" className="text-primary-600 hover:underline">← Ver todos los combos</Link>
       </div>
@@ -284,7 +284,7 @@ export default function ComboDetailPage() {
                 onClick={() => setLightboxOpen(true)}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center"><span className="text-7xl">🎁</span></div>
+              <div className="absolute inset-0 flex items-center justify-center"><GiftIcon className="h-20 w-20 text-primary-200" /></div>
             )}
             {combo.savings > 0 && (
               <span className="absolute top-3 left-3 bg-primary-600 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow z-10">
@@ -420,7 +420,7 @@ export default function ComboDetailPage() {
                     <div className="flex items-center gap-3">
                       <div className="relative h-16 w-14 flex-shrink-0 rounded-lg overflow-hidden bg-primary-50">
                         {img ? <Image src={imageSrc(img)} alt="" fill sizes="56px" className="object-cover" /> : (
-                          <span className="absolute inset-0 flex items-center justify-center text-xl">🌸</span>
+                          <span className="absolute inset-0 flex items-center justify-center"><SparklesIcon className="h-6 w-6 text-primary-300" /></span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -432,8 +432,8 @@ export default function ComboDetailPage() {
                           <span className="text-sm font-medium text-gray-800">{it.quantity}× Producto</span>
                         )}
                         {productSoldOut && (
-                          <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wide bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full">
-                            Agotado
+                          <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wide bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full">
+                            Se fue volando
                           </span>
                         )}
                         <p className="text-xs text-gray-400">
@@ -496,15 +496,15 @@ export default function ComboDetailPage() {
 
                         {/* Mensaje de stock para este producto */}
                         {productSoldOut ? (
-                          <p className="text-xs text-rose-500">Este producto está agotado por ahora.</p>
+                          <p className="text-xs text-primary-600">Este producto se fue volando. Vuelve a mirar pronto, puede que ya esté de regreso.</p>
                         ) : chosenSoldOut ? (
-                          <p className="text-xs text-rose-500">Sin stock en esta combinación. Elige otra talla o color.</p>
+                          <p className="text-xs text-primary-600">Esta combinación se fue volando. Elige otra talla o color, o vuelve a mirar pronto.</p>
                         ) : chosenInsufficient ? (
                           <p className="text-xs text-rose-500">
                             Quedan {chosen?.stock} y el combo necesita {it.quantity}. Elige otra combinación.
                           </p>
                         ) : chosen ? (
-                          <p className="text-xs text-gray-400">Disponible ({chosen.stock} en stock).</p>
+                          <p className="text-xs text-gray-400">Disponible: quedan {chosen.stock}.</p>
                         ) : null}
                       </div>
                     )}
@@ -520,8 +520,8 @@ export default function ComboDetailPage() {
               Elige talla y color de cada producto para continuar.
             </p>
           ) : !canOrder ? (
-            <p className="mt-4 text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
-              Hay productos sin stock suficiente. Ajusta las tallas o colores para poder pedir el combo.
+            <p className="mt-4 text-xs text-primary-700 bg-primary-50 border border-primary-100 rounded-lg px-3 py-2">
+              Algunas piezas de este combo se fueron volando o quedan pocas unidades. Ajusta las tallas o colores, o vuelve a mirar pronto.
             </p>
           ) : null}
 
@@ -563,7 +563,7 @@ export default function ComboDetailPage() {
                 className="p-1 text-gray-400 hover:text-gray-600"
                 aria-label="Cerrar"
               >
-                ✕
+                <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <p className="text-xs text-gray-400 mb-4">

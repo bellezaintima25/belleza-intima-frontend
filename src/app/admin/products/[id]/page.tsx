@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { TrashIcon, PlusIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, PlusIcon, ArrowLeftIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminProduct, VariantOut } from '@/lib/adminApi';
 import { formatPrice, categoryLabel } from '@/lib/format';
@@ -157,7 +157,7 @@ export default function EditProductPage() {
                         }`}
                       />
                       {(stockEdits[v.id] ?? v.stock) < 2 && (
-                        <span className="text-amber-400 text-xs">⚠️</span>
+                        <ExclamationTriangleIcon className="h-4 w-4 text-amber-400" aria-label="Stock bajo" />
                       )}
                     </div>
                   </td>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { adminApi } from '@/lib/adminApi';
 import type { StatsOut, AdminProduct, AdminOrder, PaymentStatus } from '@/lib/adminApi';
@@ -168,7 +169,7 @@ export default function AdminDashboard() {
           {/* Recently viewed toggle */}
           <div className="mb-10">
             <h2 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2">
-              <span>🕒</span> Productos vistos recientemente
+              <ClockIcon className="h-5 w-5 text-gray-400" /> Productos vistos recientemente
             </h2>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4">
               <div>
@@ -199,7 +200,7 @@ export default function AdminDashboard() {
           {lowStock.length > 0 && (
             <div>
               <h2 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-amber-400">⚠️</span> Productos con stock bajo
+                <ExclamationTriangleIcon className="h-5 w-5 text-amber-400" /> Productos con stock bajo
               </h2>
               <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
                 <table className="w-full text-sm">

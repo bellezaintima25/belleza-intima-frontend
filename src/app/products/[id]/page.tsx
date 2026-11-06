@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ShoppingBagIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { MagnifyingGlassPlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassPlusIcon, XMarkIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
 import { api, getImageForColor, effectivePrice } from '@/lib/api';
@@ -14,6 +14,8 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
 import { formatPrice, categoryLabel } from '@/lib/format';
 import SizeGuide from '@/components/SizeGuide';
+import WhatsAppIcon from '@/components/WhatsAppIcon';
+import { whatsappLink } from '@/lib/contact';
 import RecentlyViewedSection from '@/components/RecentlyViewedSection';
 
 export default function ProductDetailPage() {
@@ -338,13 +340,27 @@ export default function ProductDetailPage() {
   const bothSelected = selectedSize !== null && selectedColor !== null;
   const combinationInvalid = bothSelected && !selectedVariant;
   const outOfStock = selectedVariant !== null && selectedVariant.stock === 0;
+  // ¿Todas las combinaciones del producto están agotadas?
+  const soldOutAll = variants.length > 0 && variants.every((v) => v.stock <= 0);
+  const showSoldOut = soldOutAll || outOfStock;
+
+  // Mensaje de WhatsApp para pedir que le avisen cuando el producto vuelva.
+  const restockDetail = [
+    selectedSize && `Talla: ${selectedSize}`,
+    selectedColor && `Color: ${selectedColor}`,
+  ].filter(Boolean).join(' | ');
+  const restockMessage = [
+    'Hola! Me gustaría que me avisen cuando vuelva a estar disponible:',
+    `*${product.name}*${restockDetail ? ` (${restockDetail})` : ''}`,
+    typeof window !== 'undefined' ? window.location.href : '',
+  ].filter(Boolean).join('\n');
 
   return (
     <>
     <div className="max-w-4xl mx-auto px-4 py-8">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary-600 transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-500 bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-full transition-colors mb-6 hover:text-white"
       >
         <ArrowLeftIcon className="h-4 w-4" />
         Volver al catálogo
@@ -376,7 +392,9 @@ export default function ProductDetailPage() {
               </button>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-8xl">🌸</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} className="w-16 h-16 text-primary-200">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                </svg>
               </div>
             )}
 
@@ -512,16 +530,35 @@ export default function ProductDetailPage() {
 
           {/* Status message */}
           <div className="mt-3 text-sm min-h-[20px]">
-            {outOfStock && (
-              <p className="text-red-400">Sin stock en esta combinación.</p>
+            {showSoldOut && (
+              <div className="flex items-start gap-3 rounded-xl bg-primary-50 border border-primary-100 px-4 py-3">
+                <SparklesIcon className="h-5 w-5 flex-shrink-0 mt-0.5 text-primary-400" aria-hidden="true" />
+                <div>
+                  <p className="font-semibold text-primary-700">
+                    {soldOutAll ? 'Este producto se fue volando' : 'Esta combinación se fue volando'}
+                  </p>
+                  <p className="text-primary-600/80 mt-0.5">
+                    Vuelve a mirar pronto, puede que ya esté de regreso.
+                  </p>
+                </div>
+              </div>
             )}
             {combinationInvalid && (
               <p className="text-gray-400">Esta combinación no está disponible.</p>
             )}
             {selectedVariant && !outOfStock && (
-              <p className="text-gray-400">
-                Stock disponible: {selectedVariant.stock} unidad{selectedVariant.stock !== 1 ? 'es' : ''}
-              </p>
+              selectedVariant.stock <= 3 ? (
+                <p className="text-amber-500 font-medium flex items-center gap-1.5">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4 flex-shrink-0">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  ¡Solo quedan {selectedVariant.stock} unidad{selectedVariant.stock !== 1 ? 'es' : ''}!
+                </p>
+              ) : (
+                <p className="text-gray-400">
+                  Disponibles: {selectedVariant.stock} unidades
+                </p>
+              )
             )}
           </div>
 
@@ -536,17 +573,47 @@ export default function ProductDetailPage() {
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
-            <ShoppingBagIcon className="h-5 w-5" />
-            {added
-              ? '¡Agregado! ✓'
-              : outOfStock
-              ? 'Sin stock'
-              : !canAddMore && selectedVariant
-              ? `Máximo en carrito (${selectedVariant.stock})`
-              : selectedVariant
-              ? 'Agregar al carrito'
-              : 'Selecciona talla y color'}
+            {added ? (
+              <>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                ¡Agregado al carrito!
+              </>
+            ) : showSoldOut ? (
+              <>
+                <ClockIcon className="h-5 w-5" aria-hidden="true" />
+                Vuelve a mirar pronto
+              </>
+            ) : !canAddMore && selectedVariant ? (
+              `Máximo en carrito (${selectedVariant.stock})`
+            ) : selectedVariant ? (
+              <>
+                <ShoppingBagIcon className="h-5 w-5" />
+                Agregar al carrito
+              </>
+            ) : (
+              'Selecciona talla y color'
+            )}
           </button>
+
+          {/* Aviso de reposición: abre WhatsApp con un mensaje listo para enviar */}
+          {showSoldOut && (
+            <div className="mt-3">
+              <a
+                href={whatsappLink(restockMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold border border-primary-200 bg-white text-primary-700 hover:bg-primary-50 transition-colors"
+              >
+                <WhatsAppIcon className="w-5 h-5" />
+                Avísame cuando vuelva
+              </a>
+              <p className="text-xs text-center text-gray-400 mt-2">
+                Se abrirá WhatsApp con tu mensaje listo para enviar.
+              </p>
+            </div>
+          )}
 
           {/* Breve descripción del producto */}
           {product.detail && (

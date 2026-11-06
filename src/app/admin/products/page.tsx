@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { PlusIcon, PencilSquareIcon, TrashIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilSquareIcon, TrashIcon, MagnifyingGlassIcon, XMarkIcon, SparklesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminProduct } from '@/lib/adminApi';
 import { formatPrice, categoryLabel } from '@/lib/format';
@@ -262,7 +262,7 @@ export default function AdminProductsPage() {
                           {imgUrl ? (
                             <Image src={imgUrl} alt={p.name} fill sizes="40px" className="object-cover" />
                           ) : (
-                            <span className="absolute inset-0 flex items-center justify-center text-lg">🌸</span>
+                            <span className="absolute inset-0 flex items-center justify-center"><SparklesIcon className="h-5 w-5 text-primary-300" /></span>
                           )}
                         </div>
                         <div>
@@ -294,7 +294,7 @@ export default function AdminProductsPage() {
                         isLow(p) ? 'text-amber-500' : 'text-gray-700'
                       }`}>
                         {totalStock(p)}
-                        {isLow(p) && <span className="ml-1 text-amber-400">⚠️</span>}
+                        {isLow(p) && <ExclamationTriangleIcon className="ml-1 inline h-4 w-4 text-amber-400" aria-label="Stock bajo" />}
                       </span>
                     </td>
                     <td className="px-5 py-3">

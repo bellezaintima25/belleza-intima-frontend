@@ -1,5 +1,7 @@
 'use client';
 
+import { GiftIcon } from '@heroicons/react/24/outline';
+
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Combo } from '@/lib/api';
@@ -46,7 +48,7 @@ export default function CombosPage() {
         </div>
       ) : combos.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <span className="text-5xl block mb-3">🎁</span>
+          <GiftIcon className="h-14 w-14 mx-auto mb-3 text-primary-200" />
           <p>Muy pronto tendremos combos de promoción.</p>
         </div>
       ) : (

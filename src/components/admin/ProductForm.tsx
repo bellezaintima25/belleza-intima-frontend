@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CheckIcon } from '@heroicons/react/24/outline';
 import { formatPrice } from '@/lib/format';
 
 const CATEGORIES = ['SET', 'BODY', 'CORSET', 'PANTY', 'PIJAMA'];
@@ -198,7 +199,9 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
         disabled={saving}
         className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
       >
-        {success ? '✓ Guardado' : saving ? 'Guardando...' : submitLabel}
+        {success ? (
+          <span className="inline-flex items-center justify-center gap-1.5"><CheckIcon className="h-4 w-4" /> Guardado</span>
+        ) : saving ? 'Guardando...' : submitLabel}
       </button>
     </form>
   );

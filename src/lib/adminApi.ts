@@ -1,3 +1,5 @@
+import { apiFetch, readApiError } from './apiError';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 export interface StatsOut {
@@ -136,6 +138,7 @@ export interface AdminOrder {
   id: number;
   customer_name: string;
   customer_phone: string;
+  customer_city?: string | null;
   status: 'PENDING' | 'SENT';
   payment_status: PaymentStatus;
   stock_applied: boolean;
@@ -236,13 +239,12 @@ export interface TestimonialInput {
 }
 
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await apiFetch(`${API_URL}${path}`, {
     headers: options?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' },
     ...options,
   });
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || res.statusText);
+    throw new Error(await readApiError(res));
   }
   if (res.status === 204) return undefined as T;
   return res.json();
@@ -304,7 +306,7 @@ export const adminApi = {
       }),
     deleteItem: (orderId: number, itemId: number) =>
       req<AdminOrder>(`/orders/${orderId}/items/${itemId}`, { method: 'DELETE' }),
-    updateCustomer: (orderId: number, data: { customer_name?: string; customer_phone?: string }) =>
+    updateCustomer: (orderId: number, data: { customer_name?: string; customer_phone?: string; customer_city?: string }) =>
       req<AdminOrder>(`/orders/${orderId}/customer`, {
         method: 'PATCH',
         body: JSON.stringify(data),
