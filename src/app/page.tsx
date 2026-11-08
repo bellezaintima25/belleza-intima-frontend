@@ -12,6 +12,7 @@ import ProductCard from '@/components/ProductCard';
 import ComboCard from '@/components/ComboCard';
 import TopBar from '@/components/TopBar';
 import CategoryCarousel from '@/components/CategoryCarousel';
+import TestimonialForm from '@/components/TestimonialForm';
 
 const DEFAULT_CATEGORIES = [
   { key: 'SET', image: '/images/ST005-Azul-claro-1.jpeg' },
@@ -74,6 +75,7 @@ export default function HomePage() {
   const [specials, setSpecials] = useState<Product[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [testimonialFormOpen, setTestimonialFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [hero, setHero] = useState<HeroContent>(DEFAULT_HERO);
@@ -244,13 +246,17 @@ export default function HomePage() {
       )}
 
       {/* Momentos Belleza Íntima */}
-      {testimonials.length > 0 && (
-        <FadeInSection className="bg-primary-50/60">
+      <FadeInSection className="bg-primary-50/60">
           <div className="max-w-6xl mx-auto px-4 py-16">
             <div className="text-center mb-10">
               <SectionTitle align="center">Momentos Belleza Íntima</SectionTitle>
               <p className="text-gray-500 mt-3">Lo que sienten quienes se atreven a sentirse bien.</p>
             </div>
+            {testimonials.length === 0 && (
+              <p className="text-center text-gray-500 text-sm mb-6">
+                Aún no hay comentarios. ¡Sé la primera en contarnos tu experiencia!
+              </p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {testimonials.map((t) => (
                 <figure key={t.id} className="bg-white rounded-2xl shadow-sm ring-1 ring-primary-100/60 p-5 flex flex-col">
@@ -273,9 +279,19 @@ export default function HomePage() {
                 </figure>
               ))}
             </div>
+            <div className="text-center mt-10">
+              <button
+                type="button"
+                onClick={() => setTestimonialFormOpen(true)}
+                className="inline-flex items-center gap-2 bg-white hover:bg-primary-600 text-primary-700 hover:text-white font-semibold px-7 py-3 rounded-full ring-1 ring-primary-200 hover:ring-primary-600 shadow-sm transition-colors"
+              >
+                <StarIcon className="h-4 w-4 text-amber-400" aria-hidden="true" />
+                Cuéntanos tu experiencia
+              </button>
+            </div>
           </div>
-        </FadeInSection>
-      )}
+      </FadeInSection>
+      <TestimonialForm open={testimonialFormOpen} onClose={() => setTestimonialFormOpen(false)} />
 
       {/* Brand teaser */}
       <FadeInSection className="bg-primary-50">

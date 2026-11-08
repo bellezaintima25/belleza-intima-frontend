@@ -194,15 +194,17 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
 
       {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
-      >
-        {success ? (
-          <span className="inline-flex items-center justify-center gap-1.5"><CheckIcon className="h-4 w-4" /> Guardado</span>
-        ) : saving ? 'Guardando...' : submitLabel}
-      </button>
+      <div className="sticky bottom-0 -mx-1 px-1 py-3 bg-white/90 backdrop-blur-sm">
+        <button
+          type="submit"
+          disabled={saving}
+          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
+        >
+          {success ? (
+            <span className="inline-flex items-center justify-center gap-1.5"><CheckIcon className="h-4 w-4" /> Guardado</span>
+          ) : saving ? 'Guardando...' : submitLabel}
+        </button>
+      </div>
     </form>
   );
 }

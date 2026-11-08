@@ -89,7 +89,7 @@ export default function CheckoutPage() {
         })),
       });
 
-      const { whatsapp_url } = await api.orders.sendWhatsApp(order.id);
+      const { whatsapp_url } = await api.orders.sendWhatsApp(order.id, order.token ?? '');
       clearCart();
       window.open(whatsapp_url, '_blank');
       const tokenQs = order.token ? `&token=${encodeURIComponent(order.token)}` : '';

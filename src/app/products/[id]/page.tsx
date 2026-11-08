@@ -332,8 +332,12 @@ export default function ProductDetailPage() {
   // How many of this variant are already in the cart
   const qtyInCart = items.find((i) => i.variant.id === selectedVariant?.id)?.quantity ?? 0;
   const canAddMore = selectedVariant ? qtyInCart < selectedVariant.stock : false;
-  // Always show all images in the gallery — highlight color-matched ones
-  const galleryImages = product.images;
+  // Galería completa: si hay color elegido, sus fotos van primero y se resaltan.
+  const matchesColor = (c: string | null | undefined) =>
+    !!selectedColor && !!c && c.toLowerCase() === selectedColor.toLowerCase();
+  const galleryImages = selectedColor
+    ? [...product.images].sort((a, b) => Number(matchesColor(b.color)) - Number(matchesColor(a.color)))
+    : product.images;
   const displayImage = activeImage ?? getImageForColor(product.images, selectedColor);
 
   // Determine add-to-cart button state
@@ -419,13 +423,17 @@ export default function ProductDetailPage() {
             <div className="flex gap-2 overflow-x-auto pb-1">
               {galleryImages.map((img) => {
                 const isColorMatch = !selectedColor || !img.color || img.color.toLowerCase() === selectedColor.toLowerCase();
+                const isVariantPhoto = matchesColor(img.color);
                 return (
                   <button
                     key={img.id}
                     onClick={() => setActiveImage(img.url)}
+                    title={img.color ?? undefined}
                     className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                       activeImage === img.url
                         ? 'border-primary-500'
+                        : isVariantPhoto
+                        ? 'border-primary-300 ring-2 ring-primary-200'
                         : 'border-transparent hover:border-primary-300'
                     } ${!isColorMatch ? 'opacity-35' : ''}`}
                   >

@@ -1,4 +1,6 @@
 import { apiFetch, readApiError } from './apiError';
+import { clearSession, getToken, replaceSession, saveSession } from './auth';
+import type { AdminUser } from './auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -227,8 +229,14 @@ export interface Testimonial {
   photo_url: string | null;
   active: boolean;
   sort_order: number;
+  /** PENDING = esperando revisión · APPROVED = publicado · REJECTED = descartado */
+  status: TestimonialStatus;
+  /** true si lo envió una clienta desde la tienda; false si lo creó el admin. */
+  from_customer: boolean;
   created_at: string;
 }
+
+export type TestimonialStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface TestimonialInput {
   customer_name: string;
@@ -238,11 +246,29 @@ export interface TestimonialInput {
   active: boolean;
 }
 
+/** Lleva a la pantalla de ingreso (una sola vez) cuando la sesión venció o no es válida. */
+function sessionExpired(): void {
+  clearSession();
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin/login')) {
+    window.location.assign('/admin/login?expired=1');
+  }
+}
+
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await apiFetch(`${API_URL}${path}`, {
-    headers: options?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' },
     ...options,
+    headers: {
+      // Con FormData el navegador pone el Content-Type (con el boundary) por su cuenta.
+      ...(options?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options?.headers as Record<string, string> | undefined),
+    },
   });
+  if (res.status === 401) {
+    sessionExpired();
+    throw new Error('Tu sesión venció. Ingresa de nuevo.');
+  }
   if (!res.ok) {
     throw new Error(await readApiError(res));
   }
@@ -250,8 +276,58 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export interface LoginResponse {
+  access_token: string;
+  expires_at: string;
+  user: AdminUser;
+}
+
+export interface TeamMember {
+  id: number;
+  username: string;
+  display_name: string;
+  active: boolean;
+  created_at: string | null;
+  last_login_at: string | null;
+  is_me: boolean;
+}
+
 export const adminApi = {
   stats: () => req<StatsOut>('/products/stats'),
+
+  auth: {
+    /** Inicia sesión. No usa `req`: un 401 aquí es "clave incorrecta", no "sesión vencida". */
+    login: async (username: string, password: string, remember: boolean): Promise<void> => {
+      const res = await apiFetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, remember }),
+      });
+      if (!res.ok) throw new Error(await readApiError(res));
+      const data = (await res.json()) as LoginResponse;
+      saveSession({ token: data.access_token, expiresAt: data.expires_at, user: data.user }, remember);
+    },
+    me: () => req<AdminUser>('/auth/me'),
+    logout: () => clearSession(),
+    changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+      const data = await req<LoginResponse>('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      });
+      // El servidor cierra las demás sesiones y entrega un token nuevo para esta.
+      replaceSession({ token: data.access_token, expiresAt: data.expires_at, user: data.user });
+    },
+  },
+
+  team: {
+    list: () => req<TeamMember[]>('/admin-users'),
+    create: (data: { username: string; display_name: string; password: string }) =>
+      req<TeamMember>('/admin-users', { method: 'POST', body: JSON.stringify(data) }),
+    resetPassword: (id: number, password: string) =>
+      req<TeamMember>(`/admin-users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ password }) }),
+    setActive: (id: number, active: boolean) =>
+      req<TeamMember>(`/admin-users/${id}/active`, { method: 'PATCH', body: JSON.stringify({ active }) }),
+  },
 
   products: {
     list: () => req<AdminProduct[]>('/products'),
@@ -264,6 +340,11 @@ export const adminApi = {
   variants: {
     add: (productId: number, data: object) =>
       req<VariantOut>(`/products/${productId}/variants`, { method: 'POST', body: JSON.stringify(data) }),
+    updateVariant: (productId: number, variantId: number, data: { stock?: number; price?: number | null }) =>
+      req<VariantOut>(`/products/${productId}/variants/${variantId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     updateStock: (productId: number, variantId: number, stock: number) =>
       req<VariantOut>(`/products/${productId}/variants/${variantId}/stock`, {
         method: 'PATCH',
@@ -271,6 +352,14 @@ export const adminApi = {
       }),
     delete: (productId: number, variantId: number) =>
       req<void>(`/products/${productId}/variants/${variantId}`, { method: 'DELETE' }),
+  },
+
+  colors: {
+    rename: (productId: number, oldColor: string, newColor: string) =>
+      req<AdminProduct>(`/products/${productId}/colors/rename`, {
+        method: 'PATCH',
+        body: JSON.stringify({ old_color: oldColor, new_color: newColor }),
+      }),
   },
 
   images: {
@@ -281,6 +370,11 @@ export const adminApi = {
       form.append('sort_order', String(sortOrder));
       return req<ImageOut>(`/products/${productId}/images/upload`, { method: 'POST', body: form });
     },
+    setColor: (productId: number, imageId: number, color: string | null) =>
+      req<ImageOut>(`/products/${productId}/images/${imageId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ color }),
+      }),
     delete: (productId: number, imageId: number) =>
       req<void>(`/products/${productId}/images/${imageId}`, { method: 'DELETE' }),
   },
@@ -388,7 +482,11 @@ export const adminApi = {
   },
 
   testimonials: {
-    list: () => req<Testimonial[]>('/testimonials'),
+    /** Todos los comentarios (pendientes, publicados y rechazados). */
+    list: () => req<Testimonial[]>('/testimonials/admin/list'),
+    pendingCount: () => req<{ count: number }>('/testimonials/admin/pending-count'),
+    setStatus: (id: number, status: TestimonialStatus) =>
+      req<Testimonial>(`/testimonials/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
     create: (data: TestimonialInput) => req<Testimonial>('/testimonials', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: number, data: Partial<TestimonialInput>) =>
       req<Testimonial>(`/testimonials/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

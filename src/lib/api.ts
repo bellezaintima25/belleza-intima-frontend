@@ -235,6 +235,16 @@ export interface Testimonial {
   created_at: string;
 }
 
+export interface TestimonialSubmit {
+  first_name: string;
+  last_name: string;
+  text: string;
+  rating: number;
+  photo_url?: string | null;
+  /** Campo trampa anti-robots: siempre vacío en el formulario real. */
+  website?: string;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await apiFetch(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -266,9 +276,13 @@ export const api = {
   orders: {
     create: (data: OrderCreate) =>
       request<OrderOut>('/orders', { method: 'POST', body: JSON.stringify(data) }),
-    sendWhatsApp: (orderId: number) =>
-      request<WhatsAppLinkOut>(`/orders/${orderId}/send-whatsapp`, { method: 'POST' }),
-    list: () => request<OrderOut[]>('/orders'),
+    // Además del número del pedido se envía su código secreto (token), que solo
+    // recibe quien lo creó: así nadie puede consultar pedidos ajenos.
+    sendWhatsApp: (orderId: number, token: string) =>
+      request<WhatsAppLinkOut>(`/orders/${orderId}/send-whatsapp`, {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      }),
     trackByToken: (token: string) => request<OrderTrack>(`/orders/track/${encodeURIComponent(token)}`),
     trackByPhone: (orderId: number, phone: string) =>
       request<OrderTrack>('/orders/track', {
@@ -302,6 +316,19 @@ export const api = {
   },
   testimonials: {
     list: () => request<Testimonial[]>('/testimonials?active=true'),
+    /** Envía un comentario de clienta: queda pendiente hasta que el admin lo apruebe. */
+    submit: (data: TestimonialSubmit) =>
+      request<{ ok: boolean; message: string }>('/testimonials/submit', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    /** Sube la foto opcional del comentario. Devuelve la URL para enviarla con el formulario. */
+    uploadPhoto: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      // headers vacíos: el navegador pone el Content-Type correcto para FormData.
+      return request<{ url: string }>('/testimonials/submit/photo', { method: 'POST', body: form, headers: {} });
+    },
   },
 };
 
