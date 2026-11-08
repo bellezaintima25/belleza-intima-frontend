@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -33,6 +33,13 @@ const catalogCategories = [
   { href: '/catalogo?category=PIJAMA', label: 'Pijamas' },
 ];
 
+// useLayoutEffect solo existe en el navegador; en el servidor se usa useEffect.
+const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+// Duración y curva de la píldora que se desliza entre enlaces del menú.
+const PILL_MS = 450;
+const PILL_EASE = 'cubic-bezier(.65,.05,.25,1)';
+
 export default function Navbar() {
   const { itemCount, openCart } = useCart();
   const { count: favoritesCount } = useFavorites();
@@ -53,6 +60,56 @@ export default function Navbar() {
   useEffect(() => {
     setCurrentCategory(new URLSearchParams(window.location.search).get('category'));
   }, [pathname, menuOpen]);
+
+  // ---- Píldora deslizante del menú de escritorio ----
+  // Una sola píldora se posiciona detrás del enlace activo y viaja hasta el
+  // nuevo al cambiar de página. Se mide con getBoundingClientRect porque el
+  // enlace de 'Catálogo' está dentro de otro contenedor.
+  const navRef = useRef<HTMLElement | null>(null);
+  const pillShown = useRef(false);
+  const [pill, setPill] = useState({ left: 0, width: 0, visible: false, animate: false });
+
+  const measurePill = useCallback((animateMove: boolean) => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const el = nav.querySelector<HTMLElement>('[data-active="true"]');
+    if (!el) {
+      // Página sin enlace activo (carrito, favoritos…): la píldora se desvanece.
+      pillShown.current = false;
+      setPill((p) => (p.visible ? { ...p, visible: false, animate: false } : p));
+      return;
+    }
+    const n = nav.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    // Solo se anima si ya estaba visible; al aparecer por primera vez, entra en su sitio.
+    const animate = animateMove && pillShown.current;
+    pillShown.current = true;
+    setPill({ left: r.left - n.left, width: r.width, visible: true, animate });
+  }, []);
+
+  useIsoLayoutEffect(() => {
+    measurePill(true);
+  }, [pathname, measurePill]);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    // Recalcula sin animar cuando algo cambia el tamaño o la posición de los
+    // enlaces: ventana, o tipografía que termina de cargar y ensancha los textos
+    // (el menú está centrado, así que cada cambio mueve a los demás enlaces).
+    const remeasure = () => measurePill(false);
+    const ro = new ResizeObserver(remeasure);
+    ro.observe(nav);
+    nav.querySelectorAll('a').forEach((a) => ro.observe(a));
+    document.fonts?.ready.then(remeasure);
+    document.fonts?.addEventListener?.('loadingdone', remeasure);
+    window.addEventListener('load', remeasure);
+    return () => {
+      ro.disconnect();
+      document.fonts?.removeEventListener?.('loadingdone', remeasure);
+      window.removeEventListener('load', remeasure);
+    };
+  }, [measurePill]);
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -124,7 +181,20 @@ export default function Navbar() {
         </Link>
 
         {/* Nav menu — desktop */}
-        <nav className="hidden lg:flex items-center gap-2 flex-1 justify-center">
+        <nav ref={navRef} className="hidden lg:flex items-center gap-2 flex-1 justify-center relative">
+          {/* Píldora deslizante (detrás de los textos) */}
+          <span
+            aria-hidden="true"
+            className="absolute top-0 left-0 h-full rounded-full bg-primary-50 pointer-events-none motion-reduce:!transition-none"
+            style={{
+              width: pill.width,
+              transform: `translateX(${pill.left}px)`,
+              opacity: pill.visible ? 1 : 0,
+              transition: pill.animate
+                ? `transform ${PILL_MS}ms ${PILL_EASE}, width ${PILL_MS}ms ${PILL_EASE}, opacity 200ms ease`
+                : 'opacity 200ms ease',
+            }}
+          />
           {mainLinks.map((link) =>
             link.hasDropdown ? (
               <div
@@ -135,9 +205,10 @@ export default function Navbar() {
               >
                 <Link
                   href={link.href}
-                  className={`flex items-center gap-1 text-xs font-medium tracking-wide transition-all whitespace-nowrap px-3 py-1.5 rounded-full ${
+                  data-active={isActive(link.href) ? 'true' : undefined}
+                  className={`relative z-10 flex items-center gap-1 text-xs font-medium tracking-wide transition-colors duration-300 whitespace-nowrap px-3 py-1.5 rounded-full ${
                     isActive(link.href)
-                      ? 'bg-primary-50 text-primary-700 font-semibold'
+                      ? 'text-primary-700'
                       : 'text-primary-500 hover:bg-primary-700/40 hover:text-white'
                   }`}
                   aria-haspopup="true"
@@ -170,9 +241,10 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className={`text-xs font-medium tracking-wide transition-all whitespace-nowrap px-3 py-1.5 rounded-full ${
+                data-active={isActive(link.href) ? 'true' : undefined}
+                className={`relative z-10 text-xs font-medium tracking-wide transition-colors duration-300 whitespace-nowrap px-3 py-1.5 rounded-full ${
                   isActive(link.href)
-                    ? 'bg-primary-50 text-primary-700 font-semibold'
+                    ? 'text-primary-700'
                     : 'text-primary-500 hover:bg-primary-700/40 hover:text-white'
                 }`}
               >
