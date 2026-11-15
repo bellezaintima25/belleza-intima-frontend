@@ -30,6 +30,8 @@ interface ProductFormInitial {
   featured?: boolean;
   discount_percent?: number;
   discount_active?: boolean;
+  // Para avisar si algunas tallas tienen un precio propio que no seguirá al precio base.
+  variants?: { price: number | null }[] | null;
 }
 
 interface Props {
@@ -53,7 +55,14 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // Las tallas con precio propio NO siguen al precio base: si se cambia el base, se ofrece unificarlas.
+  const [applyToVariants, setApplyToVariants] = useState(true);
 
+  const newBase = Number(form.base_price) || 0;
+  const priceChanged = initial?.base_price !== undefined && newBase !== initial.base_price;
+  const ownPrices = (initial?.variants ?? []).filter((v) => v.price != null && v.price !== newBase);
+  const showApply = priceChanged && ownPrices.length > 0;
+  const distinctOwn = [...new Set(ownPrices.map((v) => v.price as number))];
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -64,8 +73,10 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
         ...form,
         base_price: Number(form.base_price),
         discount_percent: Number(form.discount_percent) || 0,
+        ...(showApply ? { apply_price_to_variants: applyToVariants } : {}),
       });
       setSuccess(true);
+      setApplyToVariants(true); // la casilla vuelve a su valor por defecto para el próximo cambio de precio
       setTimeout(() => setSuccess(false), 2000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
@@ -127,6 +138,24 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
 
       {field('Precio base', 'base_price', 'number', { min: '0', step: '100', required: true })}
 
+      {showApply && (
+        <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={applyToVariants}
+            onChange={(e) => setApplyToVariants(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-400"
+          />
+          <span className="text-sm text-gray-700">
+            <b>Aplicar este precio a todas las tallas</b>
+            <span className="block text-xs text-gray-500 mt-0.5">
+              {ownPrices.length} talla{ownPrices.length !== 1 ? 's' : ''} tienen un precio propio
+              ({distinctOwn.map((n) => formatPrice(n)).join(', ')}) y no cambian con el precio base.
+              Si lo marcas, todas pasan a costar {formatPrice(newBase)}. Si lo dejas sin marcar, conservan su precio propio.
+            </span>
+          </span>
+        </label>
+      )}
       <label className="flex items-center gap-3 cursor-pointer select-none">
         <input
           type="checkbox"

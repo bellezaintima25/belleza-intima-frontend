@@ -148,6 +148,8 @@ export default function AdminProductsPage() {
     try {
       await adminApi.products.delete(id);
       setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'No se pudo eliminar el producto. Inténtalo de nuevo.');
     } finally {
       setDeleting(null);
     }
