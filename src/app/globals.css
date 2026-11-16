@@ -33,6 +33,7 @@
   * {
     box-sizing: border-box;
   }
+
 }
 
 /* Hide native scrollbar (used by the arrow-driven carousels). */
@@ -248,4 +249,16 @@
 /* El encabezado de impresión está oculto en pantalla; solo en el PDF/papel. */
 .print-only {
   display: none;
+}
+
+/* Pantalla de búsqueda del celular: entra con un fundido y un leve descenso. */
+@keyframes search-overlay-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+.search-overlay-in {
+  animation: search-overlay-in 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .search-overlay-in { animation: none; }
 }

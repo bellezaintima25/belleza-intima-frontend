@@ -11,6 +11,8 @@ import {
   Bars3Icon,
   ChevronDownIcon,
 } from '@heroicons/react/24/outline';
+import MobileSearch from '@/components/MobileSearch';
+import { addRecentSearch } from '@/lib/search';
 import { useCart } from '@/context/CartContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { HeartIcon } from '@heroicons/react/24/outline';
@@ -45,7 +47,8 @@ export default function Navbar() {
   const { count: favoritesCount } = useFavorites();
   const router = useRouter();
   const pathname = usePathname();
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);          // buscador en línea (escritorio)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false); // pantalla de búsqueda (celular)
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -134,6 +137,7 @@ export default function Navbar() {
     e.preventDefault();
     const q = query.trim();
     if (q) {
+      addRecentSearch(q); // el historial es el mismo en escritorio y en celular
       router.push(`/catalogo?q=${encodeURIComponent(q)}`);
       setSearchOpen(false);
       setQuery('');
@@ -256,6 +260,18 @@ export default function Navbar() {
 
         {/* Search + cart + favorites */}
         <div className="flex items-center gap-1 flex-shrink-0">
+          {/* Celular: la lupa abre una pantalla de búsqueda completa (no se encima con el logo) */}
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            className="lg:hidden p-2 text-primary-500 hover:text-white transition-colors"
+            aria-label="Buscar"
+            aria-haspopup="dialog"
+          >
+            <MagnifyingGlassIcon className="h-6 w-6" />
+          </button>
+
+          {/* Escritorio: buscador en línea, como siempre */}
+          <div className="hidden lg:block">
           {searchOpen ? (
             <form onSubmit={submitSearch} className="relative">
               <input
@@ -286,6 +302,7 @@ export default function Navbar() {
               <MagnifyingGlassIcon className="h-6 w-6" />
             </button>
           )}
+          </div>
 
           <button
             onClick={openCart}
@@ -314,6 +331,15 @@ export default function Navbar() {
           </Link>
         </div>
       </div>
+
+      {/* Pantalla de búsqueda para celular (se pinta sobre toda la página) */}
+      <MobileSearch
+        open={mobileSearchOpen}
+        onClose={() => setMobileSearchOpen(false)}
+        query={query}
+        onQueryChange={setQuery}
+        categories={catalogCategories}
+      />
 
       {/* Mobile menu — slide-in drawer */}
       {menuOpen && (

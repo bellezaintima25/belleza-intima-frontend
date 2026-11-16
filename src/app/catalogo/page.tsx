@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { matchesProduct } from '@/lib/search';
 import { MagnifyingGlassIcon, XMarkIcon, GiftIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { api } from '@/lib/api';
 import type { Product } from '@/lib/api';
@@ -44,14 +45,10 @@ function CatalogContent() {
   }, [selected]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = search.trim();
     if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
-    );
+    // Misma búsqueda que las sugerencias del menú: ignora tildes y busca por palabras.
+    return products.filter((p) => matchesProduct(p, q));
   }, [products, search]);
 
   return (
