@@ -340,14 +340,14 @@ export default function AdminTestimonialsPage() {
       )}
 
       {/* Pestañas */}
-      <div role="tablist" className="flex gap-1 border-b border-gray-200 mb-2 max-w-3xl">
+      <div role="tablist" className="flex gap-1 border-b border-gray-200 mb-2 max-w-3xl overflow-x-auto no-scrollbar">
         {TABS.map((x) => (
           <button
             key={x.key}
             role="tab"
             aria-selected={tab === x.key}
             onClick={() => setTab(x.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-sm font-semibold whitespace-nowrap flex-shrink-0 border-b-2 -mb-px transition-colors ${
               tab === x.key ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
           >

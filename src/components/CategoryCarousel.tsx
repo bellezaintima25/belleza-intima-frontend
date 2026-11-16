@@ -63,12 +63,14 @@ export default function CategoryCarousel({ categories }: { categories: Category[
 
   return (
     <div className="relative">
+      {/* Flechas: solo en celular (en pantallas grandes las categorías son una cuadrícula y no se desplazan).
+          Van DENTRO del contenedor: si se salían por el borde, toda la página se podía mover de lado. */}
       {/* Left arrow */}
       <button
         type="button"
         onClick={() => scrollByAmount('left')}
         aria-label="Anterior"
-        className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 h-10 w-10 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-primary-600 hover:bg-primary-50 transition-opacity ${
+        className={`md:hidden absolute left-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-primary-600 hover:bg-primary-50 transition-opacity ${
           canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
@@ -109,7 +111,7 @@ export default function CategoryCarousel({ categories }: { categories: Category[
         type="button"
         onClick={() => scrollByAmount('right')}
         aria-label="Siguiente"
-        className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 h-10 w-10 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-primary-600 hover:bg-primary-50 transition-opacity ${
+        className={`md:hidden absolute right-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-primary-600 hover:bg-primary-50 transition-opacity ${
           canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >

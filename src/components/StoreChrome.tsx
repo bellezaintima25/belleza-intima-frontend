@@ -29,15 +29,21 @@ function ParallaxWatermark() {
       style={{ top: '80px', bottom: '0', left: '0', right: '0' }}
       aria-hidden="true"
     >
-      <div ref={ref} className="absolute -left-48 -top-10 will-change-transform">
-        <Image
-          src="/logo.svg"
-          alt=""
-          width={900}
-          height={900}
-          className="opacity-[0.018] select-none"
-          priority={false}
-        />
+      {/* Celular (< md): el logo va centrado en la pantalla, horizontal y verticalmente.
+          Escritorio (md+): pegado a la esquina izquierda, como siempre.
+          El centrado está en este contenedor y el movimiento (parallax) en el de dentro,
+          porque ambos usan `transform` y se pisarían si estuvieran en el mismo elemento. */}
+      <div className="absolute inset-0 flex items-center justify-center md:block md:inset-auto md:-left-48 md:-top-10">
+        <div ref={ref} className="will-change-transform">
+          <Image
+            src="/logo.svg"
+            alt=""
+            width={900}
+            height={900}
+            className="opacity-[0.018] select-none h-auto max-w-none w-[120vw] md:w-[900px]"
+            priority={false}
+          />
+        </div>
       </div>
     </div>
   );

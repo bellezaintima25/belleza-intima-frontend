@@ -34,6 +34,13 @@
     box-sizing: border-box;
   }
 
+  /* La página nunca se desplaza de lado: solo lo hacen los carruseles que lo declaran
+     (overflow-x-auto). Se pone en <html> (no en <body>) para no romper el menú fijo.
+     "hidden" para navegadores antiguos y "clip" donde existe (no crea un contenedor de scroll). */
+  html {
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
 }
 
 /* Hide native scrollbar (used by the arrow-driven carousels). */
