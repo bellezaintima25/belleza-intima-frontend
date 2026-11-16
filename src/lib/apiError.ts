@@ -6,6 +6,17 @@
 export const NETWORK_ERROR_MESSAGE =
   'No se pudo conectar con el servidor. Revisa tu conexión a internet e inténtalo de nuevo.';
 
+/** Error de la API que además conserva el código HTTP (p. ej. 428 = "falta resolver la casilla"). */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 /** fetch que, si la red falla, lanza un error con un mensaje entendible. */
 export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   try {
@@ -32,6 +43,7 @@ export async function readApiError(res: Response): Promise<string> {
     // La respuesta no era JSON: se decide según el código de estado.
   }
 
+  if (res.status === 428) return 'Para continuar, confirma que eres una persona marcando la casilla.';
   if (res.status === 400) return 'No se pudo procesar la solicitud. Revisa los datos e inténtalo de nuevo.';
   if (res.status === 401) return 'Necesitas iniciar sesión para hacer esto.';
   if (res.status === 403) return 'No tienes permiso para hacer esta acción.';

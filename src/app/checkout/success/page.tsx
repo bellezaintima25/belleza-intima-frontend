@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { OrderTrack } from '@/lib/api';
 import { orderNumber } from '@/lib/format';
+import { clearPendingWhatsApp, getPendingWhatsApp } from '@/lib/contact';
 import OrderTrackView from '@/components/OrderTrackView';
 
 function SuccessContent() {
@@ -15,6 +16,9 @@ function SuccessContent() {
 
   const [order, setOrder] = useState<OrderTrack | null>(null);
   const [loading, setLoading] = useState(Boolean(token));
+  // Si el navegador bloqueó la ventana de WhatsApp, aquí se ofrece abrirla con un clic.
+  const [pendingWa, setPendingWa] = useState<string | null>(null);
+  useEffect(() => { setPendingWa(getPendingWhatsApp()); }, []);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
@@ -41,6 +45,22 @@ function SuccessContent() {
         <p className="text-gray-500 max-w-md mx-auto leading-relaxed">
           Recibimos tu pedido y lo enviamos a WhatsApp. Pronto nos comunicaremos contigo para coordinar la entrega.
         </p>
+        {pendingWa && (
+          <div className="mt-6 max-w-md mx-auto rounded-2xl border border-green-200 bg-green-50 px-5 py-4">
+            <p className="text-sm text-green-800 mb-3">
+              Tu navegador no abrió WhatsApp automáticamente. Ábrelo aquí para enviarnos tu pedido:
+            </p>
+            <a
+              href={pendingWa}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => { clearPendingWhatsApp(); setPendingWa(null); }}
+              className="inline-flex items-center justify-center rounded-full bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 transition-colors"
+            >
+              Abrir WhatsApp y enviar mi pedido
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Pasos de lo que sigue */}

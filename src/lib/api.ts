@@ -1,4 +1,4 @@
-import { apiFetch, readApiError } from './apiError';
+import { ApiError, apiFetch, readApiError } from './apiError';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -61,7 +61,13 @@ export interface OrderItem {
   unit_price: number;
 }
 
-export interface OrderCreate {
+/** Tokens de reCAPTCHA que acompañan un envío: v3 (silencioso) y, si se pidió, v2 (casilla). */
+export interface CaptchaTokens {
+  captcha_token?: string;
+  captcha_v2_token?: string;
+}
+
+export interface OrderCreate extends CaptchaTokens {
   customer_name: string;
   customer_phone: string;
   customer_city?: string;
@@ -235,7 +241,7 @@ export interface Testimonial {
   created_at: string;
 }
 
-export interface TestimonialSubmit {
+export interface TestimonialSubmit extends CaptchaTokens {
   first_name: string;
   last_name: string;
   text: string;
@@ -251,7 +257,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   });
   if (!res.ok) {
-    throw new Error(await readApiError(res));
+    throw new ApiError(await readApiError(res), res.status);
   }
   return res.json() as Promise<T>;
 }
@@ -303,7 +309,7 @@ export const api = {
       }),
     order: (
       id: number,
-      data: {
+      data: CaptchaTokens & {
         customer_name: string;
         customer_phone: string;
         selections: Array<{ product_id: number; size: string | null; color: string | null }>;

@@ -1,15 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { api, effectivePrice, getImageForColor } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
+import { useCaptcha } from '@/lib/useCaptcha';
+import { RecaptchaNotice } from '@/components/RecaptchaChallenge';
+import { openWhatsAppOrStash } from '@/lib/contact';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  // reCAPTCHA: v3 silencioso; si hace falta, aparece la casilla y el envío se repite solo.
+  const captcha = useCaptcha('checkout');
+  useEffect(() => { captcha.preload(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { items, total, clearCart } = useCart();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -64,8 +70,14 @@ export default function CheckoutPage() {
     return null;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  captcha.retry.current = () => { void submitOrder(); };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    void submitOrder();
+  };
+
+  const submitOrder = async () => {
     setSubmitError(null);
 
     const nErr = validateName(name);
@@ -87,14 +99,20 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           unit_price: effectivePrice(item.product, item.variant),
         })),
+        ...(await captcha.tokens()),
       });
 
       const { whatsapp_url } = await api.orders.sendWhatsApp(order.id, order.token ?? '');
       clearCart();
-      window.open(whatsapp_url, '_blank');
+      openWhatsAppOrStash(whatsapp_url);
       const tokenQs = order.token ? `&token=${encodeURIComponent(order.token)}` : '';
       router.push(`/checkout/success?order=${order.id}${tokenQs}`);
     } catch (err: unknown) {
+      captcha.consume(); // si se envió con la casilla, ese token ya se gastó
+      if (captcha.handleError(err)) {
+        setSubmitError('Para continuar, confirma que eres una persona marcando la casilla.');
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Ocurrió un error. Intenta de nuevo.';
       setSubmitError(message);
     } finally {
@@ -272,6 +290,8 @@ export default function CheckoutPage() {
             </div>
           )}
 
+          {captcha.widget}
+
           <button
             type="submit"
             disabled={loading}
@@ -298,6 +318,7 @@ export default function CheckoutPage() {
           <p className="text-xs text-center text-gray-400">
             Se abrirá WhatsApp con tu pedido listo para enviar.
           </p>
+          <RecaptchaNotice className="text-center" />
         </form>
       </div>
     </div>

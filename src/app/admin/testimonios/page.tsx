@@ -401,6 +401,14 @@ export default function AdminTestimonialsPage() {
                     {t.from_customer && (
                       <span className="text-[10px] font-bold uppercase bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full">Enviado por clienta</span>
                     )}
+                    {t.suspicious && (
+                      <span
+                        className="text-[10px] font-bold uppercase bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full"
+                        title="La verificación automática (reCAPTCHA) no fue concluyente. Léelo con más atención antes de publicarlo."
+                      >
+                        Revisar con cuidado
+                      </span>
+                    )}
                     {t.status === 'APPROVED' && !t.active && (
                       <span className="text-[10px] font-bold uppercase bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">Oculto</span>
                     )}

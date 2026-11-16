@@ -8,6 +8,9 @@ import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassPlusIc
 import { api, getImageForColor, imageSrc, tagBadgeStyle } from '@/lib/api';
 import type { Combo } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
+import { useCaptcha } from '@/lib/useCaptcha';
+import { RecaptchaNotice } from '@/components/RecaptchaChallenge';
+import { openWhatsAppOrStash } from '@/lib/contact';
 
 export default function ComboDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +30,8 @@ export default function ComboDetailPage() {
   // Modal de datos de contacto (se pide DESPUÉS de pulsar "Pedir").
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // reCAPTCHA: v3 silencioso; si hace falta, aparece la casilla y el envío se repite solo.
+  const captcha = useCaptcha('combo_order');
   // Visor de imagen a pantalla completa (lightbox).
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -72,6 +77,12 @@ export default function ComboDetailPage() {
     };
   }, [lightboxOpen]);
 
+  // Carga reCAPTCHA al abrir la ventana de contacto; al cerrarla se oculta la casilla.
+  useEffect(() => {
+    if (checkoutOpen) captcha.preload();
+    else captcha.reset();
+  }, [checkoutOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Paso 1: abre el modal de contacto (solo valida que haya selecciones).
   const openCheckout = () => {
     setFormError(null);
@@ -110,17 +121,24 @@ export default function ComboDetailPage() {
         customer_name: name.trim(),
         customer_phone: phone.trim(),
         selections: payload,
+        ...(await captcha.tokens()),
       });
       // Abre WhatsApp con el pedido listo y lleva a la página de éxito.
-      window.open(whatsapp_url, '_blank');
+      openWhatsAppOrStash(whatsapp_url);
       const tokenQs = token ? `&token=${encodeURIComponent(token)}` : '';
       router.push(`/checkout/success?order=${order_id}${tokenQs}`);
     } catch (e) {
+      captcha.consume(); // si se envió con la casilla, ese token ya se gastó
+      if (captcha.handleError(e)) {
+        setFormError('Para continuar, confirma que eres una persona marcando la casilla.');
+        return;
+      }
       setFormError(e instanceof Error ? e.message : 'No se pudo crear el pedido. Intenta de nuevo.');
     } finally {
       setSending(false);
     }
   };
+  captcha.retry.current = () => { void submitOrder(); };
 
   if (loading) {
     return (
@@ -602,6 +620,8 @@ export default function ComboDetailPage() {
                 <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{formError}</p>
               )}
 
+              {captcha.widget}
+
               <button
                 onClick={submitOrder}
                 disabled={sending}
@@ -615,6 +635,7 @@ export default function ComboDetailPage() {
               >
                 Volver a la selección
               </button>
+              <RecaptchaNotice className="text-center" />
             </div>
           </div>
         </div>

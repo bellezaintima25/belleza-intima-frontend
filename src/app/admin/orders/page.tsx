@@ -1,6 +1,6 @@
 'use client';
 
-import { GiftIcon, XMarkIcon, ArchiveBoxIcon, MagnifyingGlassIcon, CheckIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { GiftIcon, XMarkIcon, ArchiveBoxIcon, MagnifyingGlassIcon, CheckIcon, PencilSquareIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
@@ -430,6 +430,15 @@ export default function AdminOrdersPage() {
                         Combo
                       </span>
                     )}
+                    {order.needs_review && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full"
+                        title={order.review_reason ?? 'Por revisar'}
+                      >
+                        <ShieldExclamationIcon className="h-3 w-3" />
+                        Revisar
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-400">
                     {order.customer_phone}
@@ -522,6 +531,30 @@ export default function AdminOrdersPage() {
               {/* Detalle expandido */}
               {expanded === order.id && (
                 <div className="border-t border-gray-100 px-5 py-4 bg-gray-50">
+                  {/* Aviso de reCAPTCHA: el pedido entró, pero conviene confirmarlo con la clienta */}
+                  {order.needs_review && (
+                    <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                      <ShieldExclamationIcon className="h-5 w-5 flex-shrink-0 text-amber-600 mt-0.5" aria-hidden="true" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-amber-900">Pedido por revisar</p>
+                        <p className="text-xs text-amber-800 mt-0.5">
+                          {order.review_reason ?? 'La verificación automática no fue concluyente.'}
+                          {' '}Te sugerimos confirmar los datos con la clienta por WhatsApp antes de cobrar o enviar.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try { replaceOrder(await adminApi.orders.setReview(order.id, false)); }
+                          catch (err) { setError(err instanceof Error ? err.message : 'No se pudo actualizar el pedido.'); }
+                        }}
+                        className="flex-shrink-0 text-xs font-semibold text-amber-900 border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-lg"
+                      >
+                        Marcar como revisado
+                      </button>
+                    </div>
+                  )}
                   {/* Edición de datos del cliente (solo en modo edición) */}
                   {editing === order.id && (
                     <div className="mb-4 p-3 rounded-xl border border-dashed border-gray-200 bg-white">

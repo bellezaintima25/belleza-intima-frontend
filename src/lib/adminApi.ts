@@ -148,6 +148,10 @@ export interface AdminOrder {
   sent_at: string | null;
   combo_id?: number | null;
   combo_name?: string | null;
+  /** reCAPTCHA: el pedido entró con puntuación baja o sin poder verificarse. */
+  needs_review?: boolean;
+  review_reason?: string | null;
+  captcha_score?: number | null;
   items: OrderItemDetail[];
 }
 
@@ -231,6 +235,9 @@ export interface Testimonial {
   sort_order: number;
   /** PENDING = esperando revisión · APPROVED = publicado · REJECTED = descartado */
   status: TestimonialStatus;
+  /** reCAPTCHA: llegó con puntuación baja o sin poder verificarse. */
+  suspicious?: boolean;
+  captcha_score?: number | null;
   /** true si lo envió una clienta desde la tienda; false si lo creó el admin. */
   from_customer: boolean;
   created_at: string;
@@ -388,6 +395,12 @@ export const adminApi = {
       }),
     delete: (orderId: number) =>
       req<void>(`/orders/${orderId}`, { method: 'DELETE' }),
+    /** Marca un pedido como 'por revisar' (true) o ya revisado (false). */
+    setReview: (orderId: number, needsReview: boolean) =>
+      req<AdminOrder>(`/orders/${orderId}/review`, {
+        method: 'PATCH',
+        body: JSON.stringify({ needs_review: needsReview }),
+      }),
     addItem: (orderId: number, variantId: number, quantity: number, unitPrice?: number) =>
       req<AdminOrder>(`/orders/${orderId}/items`, {
         method: 'POST',

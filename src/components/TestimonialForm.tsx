@@ -6,6 +6,8 @@ import { createPortal } from 'react-dom';
 import { XMarkIcon, CameraIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { api, imageSrc } from '@/lib/api';
+import { useCaptcha } from '@/lib/useCaptcha';
+import { RecaptchaNotice } from '@/components/RecaptchaChallenge';
 
 const MAX_TEXT = 600;
 const MIN_TEXT = 10;
@@ -39,6 +41,12 @@ export default function TestimonialForm({ open, onClose }: Props) {
   const [trap, setTrap] = useState(''); // campo trampa: las personas nunca lo ven
   const firstRef = useRef<HTMLInputElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  // reCAPTCHA: v3 silencioso; si hace falta, aparece la casilla y el envío se repite solo.
+  const captcha = useCaptcha('testimonial');
+  useEffect(() => {
+    if (open) captcha.preload(); // carga el script solo cuando se abre el formulario
+    else captcha.reset();
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cerrar con Escape, bloquear el scroll del fondo y enfocar el primer campo.
   // onClose va en una ref para que el efecto solo dependa de `open` (si no, se
@@ -88,8 +96,13 @@ export default function TestimonialForm({ open, onClose }: Props) {
     }
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    void send();
+  };
+  captcha.retry.current = () => { void send(); };
+
+  const send = async () => {
     setError(null);
     if (!firstName.trim()) return setError('Escribe tu nombre.');
     if (!lastName.trim()) return setError('Escribe tu apellido (solo se mostrará la inicial).');
@@ -104,9 +117,15 @@ export default function TestimonialForm({ open, onClose }: Props) {
         rating,
         photo_url: photoUrl || null,
         website: trap,
+        ...(await captcha.tokens()),
       });
       setDone(true);
     } catch (err) {
+      captcha.consume(); // si se envió con la casilla, ese token ya se gastó
+      if (captcha.handleError(err)) {
+        setError('Para continuar, confirma que eres una persona marcando la casilla.');
+        return;
+      }
       setError(err instanceof Error ? err.message : 'No se pudo enviar tu comentario. Inténtalo de nuevo.');
     } finally {
       setSending(false);
@@ -268,6 +287,8 @@ export default function TestimonialForm({ open, onClose }: Props) {
               <p role="alert" className="text-sm text-rose-600 bg-rose-50 rounded-xl px-3.5 py-2.5">{error}</p>
             )}
 
+            {captcha.widget}
+
             <button
               type="submit"
               disabled={sending || uploading}
@@ -275,6 +296,7 @@ export default function TestimonialForm({ open, onClose }: Props) {
             >
               {sending ? 'Enviando…' : 'Enviar comentario'}
             </button>
+            <RecaptchaNotice className="text-center" />
           </form>
         )}
       </div>

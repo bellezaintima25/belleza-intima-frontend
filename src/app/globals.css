@@ -269,3 +269,9 @@
 @media (prefers-reduced-motion: reduce) {
   .search-overlay-in { animation: none; }
 }
+
+/* reCAPTCHA: se oculta la insignia flotante de Google; los formularios protegidos
+   muestran en su lugar el aviso de privacidad y términos que Google exige. */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
