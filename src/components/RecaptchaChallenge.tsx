@@ -63,7 +63,7 @@ export default function RecaptchaChallenge({ onToken, onExpired, resetKey }: Pro
 
   // Reinicia la casilla cuando el token ya se usó o falló.
   useEffect(() => {
-    if (resetKey > 0 && widgetId.current !== null) window.grecaptcha?.reset(widgetId.current);
+    if (resetKey > 0 && widgetId.current !== null) window.grecaptcha?.enterprise?.reset(widgetId.current);
   }, [resetKey]);
 
   // La casilla mide 304 px: en pantallas más angostas se reduce para no provocar scroll lateral.

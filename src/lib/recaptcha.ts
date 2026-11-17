@@ -1,5 +1,5 @@
 /**
- * Google reCAPTCHA en el navegador: v3 (silencioso) + v2 (casilla de reto).
+ * Google reCAPTCHA Enterprise en el navegador: v3 (silencioso) + v2 (casilla de reto).
  *
  * - Sin NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY el captcha queda desactivado: no se carga
  *   nada de Google y los formularios funcionan igual (útil en local).
@@ -31,7 +31,7 @@ export interface RecaptchaApi {
 
 declare global {
   interface Window {
-    grecaptcha?: RecaptchaApi;
+    grecaptcha?: { enterprise?: RecaptchaApi };
   }
 }
 
@@ -44,11 +44,11 @@ export function loadRecaptcha(): Promise<RecaptchaApi | null> {
   loader = new Promise<RecaptchaApi | null>((resolve) => {
     const script = document.createElement('script');
     // render=<clave v3> habilita v3 y deja disponible grecaptcha.render() para la casilla v2.
-    script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(RECAPTCHA_V3_KEY)}&hl=es`;
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(RECAPTCHA_V3_KEY)}&hl=es`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      const g = window.grecaptcha;
+      const g = window.grecaptcha?.enterprise;
       if (!g) return resolve(null);
       g.ready(() => resolve(g));
     };
