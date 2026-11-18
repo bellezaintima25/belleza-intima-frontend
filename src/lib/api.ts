@@ -290,10 +290,10 @@ export const api = {
         body: JSON.stringify({ token }),
       }),
     trackByToken: (token: string) => request<OrderTrack>(`/orders/track/${encodeURIComponent(token)}`),
-    trackByPhone: (orderId: number, phone: string) =>
+    trackByPhone: (orderId: number, phone: string, captcha: CaptchaTokens = {}) =>
       request<OrderTrack>('/orders/track', {
         method: 'POST',
-        body: JSON.stringify({ order_id: orderId, customer_phone: phone }),
+        body: JSON.stringify({ order_id: orderId, customer_phone: phone, ...captcha }),
       }),
   },
   combos: {

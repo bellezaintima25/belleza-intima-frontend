@@ -6,6 +6,9 @@ import { api } from '@/lib/api';
 import type { OrderTrack } from '@/lib/api';
 import { parseOrderNumber } from '@/lib/format';
 import OrderTrackView from '@/components/OrderTrackView';
+import { useCaptcha } from '@/lib/useCaptcha';
+import { RecaptchaNotice } from '@/components/RecaptchaChallenge';
+import { ApiError } from '@/lib/apiError';
 
 function MiPedidoContent() {
   const params = useSearchParams();
@@ -21,6 +24,10 @@ function MiPedidoContent() {
   const [phone, setPhone] = useState('');
   const [searching, setSearching] = useState(false);
 
+  // reCAPTCHA: v3 silencioso; si hace falta, aparece la casilla y la búsqueda se repite sola.
+  const captcha = useCaptcha('track');
+  useEffect(() => { captcha.preload(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Si llega con ?token= en la URL, carga el pedido directamente.
   useEffect(() => {
     if (!tokenFromUrl) return;
@@ -32,19 +39,32 @@ function MiPedidoContent() {
       .finally(() => setLoading(false));
   }, [tokenFromUrl]);
 
-  const searchByPhone = async (e: React.FormEvent) => {
-    e.preventDefault();
+  captcha.retry.current = () => { void searchByPhone(); };
+
+  const searchByPhone = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setError(null);
     const idNum = parseOrderNumber(orderId);
     if (!idNum) { setError('Escribe el número de tu pedido (ej. BI-100001).'); return; }
     if (phone.replace(/\D/g, '').length < 7) { setError('Escribe el teléfono con el que hiciste el pedido.'); return; }
     setSearching(true);
     try {
-      const found = await api.orders.trackByPhone(idNum, phone.trim());
+      const found = await api.orders.trackByPhone(idNum, phone.trim(), await captcha.tokens());
+      captcha.reset();
       // Quita el token viejo de la URL para que al refrescar no vuelva al pedido anterior.
       if (tokenFromUrl) router.replace('/mi-pedido');
       setOrder(found);
-    } catch {
+    } catch (err: unknown) {
+      captcha.consume(); // si se envió con la casilla, ese token ya se gastó
+      if (captcha.handleError(err)) {
+        setError('Para continuar, confirma que eres una persona marcando la casilla.');
+        return;
+      }
+      if (err instanceof ApiError && err.status === 429) {
+        setError(err.message);
+        setOrder(null);
+        return;
+      }
       setError('No encontramos un pedido con ese número y teléfono. Revisa los datos.');
       setOrder(null);
     } finally {
@@ -114,6 +134,8 @@ function MiPedidoContent() {
 
           {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 
+          {captcha.widget}
+
           <button
             type="submit"
             disabled={searching}
@@ -121,6 +143,7 @@ function MiPedidoContent() {
           >
             {searching ? 'Buscando…' : 'Ver mi pedido'}
           </button>
+          <RecaptchaNotice className="text-center" />
         </form>
       )}
     </div>
