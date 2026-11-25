@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { XMarkIcon, TrashIcon, GiftIcon } from '@heroicons/react/24/outline';
 import { useCart, maxComboQty } from '@/context/CartContext';
+import CartOffers from '@/components/CartOffers';
 import { formatPrice } from '@/lib/format';
 import { getImageForColor, effectivePrice, imageSrc } from '@/lib/api';
 
@@ -225,6 +226,9 @@ export default function CartDrawer() {
               </div>
             );
           })}
+
+          {/* Incentivo: ofertas y combos que todavía no tiene en el carrito */}
+          {!isEmpty && isOpen && <CartOffers onNavigate={closeCart} />}
         </div>
 
         {/* Footer */}
