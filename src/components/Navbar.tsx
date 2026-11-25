@@ -169,7 +169,7 @@ export default function Navbar() {
               width={72}
               height={72}
               priority
-              className="transition-transform duration-500 ease-in-out group-hover:scale-105"
+              className="h-[52px] w-[52px] min-[360px]:h-16 min-[360px]:w-16 min-[375px]:h-[72px] min-[375px]:w-[72px] transition-transform duration-500 ease-in-out group-hover:scale-105"
             />
             <span
               className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
@@ -259,11 +259,11 @@ export default function Navbar() {
         </nav>
 
         {/* Search + cart + favorites */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 max-[359px]:gap-0.5 flex-shrink-0">
           {/* Celular: la lupa abre una pantalla de búsqueda completa (no se encima con el logo) */}
           <button
             onClick={() => setMobileSearchOpen(true)}
-            className="lg:hidden p-2 text-primary-500 hover:text-white transition-colors"
+            className="lg:hidden p-2 max-[359px]:p-1.5 text-primary-500 hover:text-white transition-colors"
             aria-label="Buscar"
             aria-haspopup="dialog"
           >
@@ -306,7 +306,7 @@ export default function Navbar() {
 
           <button
             onClick={openCart}
-            className="relative p-2 text-primary-500 hover:text-white transition-colors"
+            className="relative p-2 max-[359px]:p-1.5 text-primary-500 hover:text-white transition-colors"
             aria-label="Abrir carrito"
           >
             <ShoppingBagIcon className="h-6 w-6" />
@@ -319,7 +319,7 @@ export default function Navbar() {
 
           <Link
             href="/favoritos"
-            className="relative p-2 text-primary-500 hover:text-white transition-colors"
+            className="relative p-2 max-[359px]:p-1.5 text-primary-500 hover:text-white transition-colors"
             aria-label="Ver me gusta"
           >
             <HeartIcon className="h-6 w-6" />
