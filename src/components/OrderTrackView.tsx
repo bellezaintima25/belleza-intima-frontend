@@ -8,6 +8,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 
+import { Fragment } from 'react';
 import type { OrderTrack, PaymentStatus } from '@/lib/api';
 import { formatPrice, orderNumber } from '@/lib/format';
 
@@ -103,8 +104,18 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
       <div className="border-t border-gray-100 pt-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Resumen</p>
         <ul className="space-y-2">
-          {order.items.map((it, idx) => (
-            <li key={idx} className="flex items-center justify-between text-sm">
+          {order.items.map((it, idx) => {
+            // Cuando empieza un combo (o una copia distinta del mismo combo) se pone su título.
+            const prev = order.items[idx - 1];
+            const startsCombo = it.combo_group != null && (prev?.combo_group !== it.combo_group || prev?.combo_name !== it.combo_name);
+            return (
+            <Fragment key={idx}>
+            {startsCombo && (
+              <li className="pt-1 text-[11px] font-bold uppercase tracking-wide text-primary-600">
+                Combo: {it.combo_name ?? 'Combo'}
+              </li>
+            )}
+            <li className={`flex items-center justify-between text-sm ${it.combo_group != null ? 'pl-3 border-l-2 border-primary-100' : ''}`}>
               <div className="min-w-0">
                 <p className="text-gray-800 truncate">{it.quantity}× {it.product_name}</p>
                 {(it.size || it.color) && (
@@ -123,7 +134,9 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
                 <span className="font-medium text-gray-700 nums">{formatPrice(it.line_total)}</span>
               </span>
             </li>
-          ))}
+            </Fragment>
+            );
+          })}
         </ul>
         <div className="border-t border-gray-100 mt-3 pt-3 space-y-1.5">
           {order.savings > 0 && (

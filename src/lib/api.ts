@@ -58,7 +58,15 @@ export interface Product {
 export interface OrderItem {
   variant_id: number;
   quantity: number;
-  unit_price: number;
+  /** Solo informativo: el servidor calcula el precio real y lo ignora. */
+  unit_price?: number;
+}
+
+/** Un combo del carrito al hacer el pedido: el servidor lo precia y valida el stock. */
+export interface OrderComboLine {
+  combo_id: number;
+  quantity: number;
+  selections: Array<{ product_id: number; size: string | null; color: string | null }>;
 }
 
 /** Tokens de reCAPTCHA que acompañan un envío: v3 (silencioso) y, si se pidió, v2 (casilla). */
@@ -72,6 +80,7 @@ export interface OrderCreate extends CaptchaTokens {
   customer_phone: string;
   customer_city?: string;
   items: OrderItem[];
+  combos?: OrderComboLine[];
 }
 
 export interface OrderOut {
@@ -103,6 +112,9 @@ export interface OrderTrackItem {
   original_unit_price: number;
   line_original: number;
   line_savings: number;
+  /** Si la línea viene de un combo: su nombre y número de copia (para agruparlas). */
+  combo_name?: string | null;
+  combo_group?: number | null;
 }
 
 export interface OrderTrack {

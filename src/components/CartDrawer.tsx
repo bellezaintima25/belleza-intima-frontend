@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useCart } from '@/context/CartContext';
+import { XMarkIcon, TrashIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { useCart, maxComboQty } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { getImageForColor, effectivePrice } from '@/lib/api';
+import { getImageForColor, effectivePrice, imageSrc } from '@/lib/api';
 
 function EmptyBag() {
   return (
@@ -22,14 +22,15 @@ function EmptyBag() {
 }
 
 export default function CartDrawer() {
-  const { isOpen, closeCart, items, removeItem, updateQty, total, itemCount } = useCart();
+  const { isOpen, closeCart, items, combos, removeItem, updateQty, removeCombo, updateComboQty, total, itemCount } = useCart();
+  const isEmpty = items.length === 0 && combos.length === 0;
 
   // Calcular ahorro total si hay productos en descuento
   const totalSavings = items.reduce((acc, item) => {
     const base = item.product.base_price;
     const final = effectivePrice(item.product, item.variant);
     return acc + (base - final) * item.quantity;
-  }, 0);
+  }, 0) + combos.reduce((acc, c) => acc + Math.max(0, c.originalPrice - c.finalPrice) * c.quantity, 0);
 
   return (
     <>
@@ -70,7 +71,7 @@ export default function CartDrawer() {
 
         {/* Items */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {items.length === 0 ? (
+          {isEmpty ? (
             <EmptyBag />
           ) : (
             items.map((item) => {
@@ -154,10 +155,80 @@ export default function CartDrawer() {
               );
             })
           )}
+
+          {/* Combos */}
+          {combos.map((c) => {
+            const max = maxComboQty(c);
+            const saving = Math.max(0, c.originalPrice - c.finalPrice);
+            return (
+              <div key={c.lineId} className="flex gap-4 p-3 rounded-2xl bg-primary-50/40 border border-primary-100 group">
+                <div className="w-20 h-24 flex-shrink-0 bg-primary-50 rounded-xl overflow-hidden relative">
+                  {c.image ? (
+                    <Image src={imageSrc(c.image)} alt={c.name} fill sizes="80px" className="object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-primary-300">
+                      <GiftIcon className="w-8 h-8" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary-600">Combo</p>
+                  <p className="font-semibold text-gray-800 text-sm leading-tight">{c.name}</p>
+                  <ul className="mt-1 space-y-0.5 text-xs text-gray-500">
+                    {c.items.map((i) => (
+                      <li key={i.productId} className="truncate">
+                        {i.quantity}× {i.name}{i.size || i.color ? ` · ${[i.size, i.color].filter(Boolean).join(' · ')}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-baseline gap-2 mt-1.5 flex-wrap">
+                    <p className="text-primary-600 font-bold text-sm nums">{formatPrice(c.finalPrice)}</p>
+                    {saving > 0 && (
+                      <>
+                        <p className="text-xs text-gray-400 line-through nums">{formatPrice(c.originalPrice)}</p>
+                        <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full nums">
+                          ahorras {formatPrice(saving)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      onClick={() => updateComboQty(c.lineId, c.quantity - 1)}
+                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary-500 hover:bg-primary-50 hover:text-primary-700 transition-all"
+                      aria-label="Disminuir cantidad"
+                    >
+                      −
+                    </button>
+                    <span className="text-sm font-semibold w-4 text-center nums">{c.quantity}</span>
+                    <button
+                      onClick={() => updateComboQty(c.lineId, c.quantity + 1)}
+                      disabled={c.quantity >= max}
+                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary-500 hover:bg-primary-50 hover:text-primary-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Aumentar cantidad"
+                    >
+                      +
+                    </button>
+                    {c.quantity >= max && <span className="text-xs text-amber-500">máx.</span>}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => removeCombo(c.lineId)}
+                  className="p-1.5 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-all self-start opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  aria-label={`Eliminar ${c.name}`}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         {/* Footer */}
-        {items.length > 0 && (
+        {!isEmpty && (
           <div className="px-6 py-5 border-t border-gray-100 space-y-3">
             {/* Ahorro total */}
             {totalSavings > 0 && (

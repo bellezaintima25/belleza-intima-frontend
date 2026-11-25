@@ -620,6 +620,15 @@ export default function AdminOrdersPage() {
                         <tr key={item.id} className="border-t border-gray-100">
                           <td className="py-2 font-medium text-gray-800">
                             {item.variant?.product?.name ?? `Variante #${item.variant_id}`}
+                            {item.combo_name && (
+                              <span
+                                className="ml-2 inline-flex items-center gap-1 align-middle text-[10px] font-bold uppercase tracking-wide bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full"
+                                title={`Parte del combo: ${item.combo_name}`}
+                              >
+                                <GiftIcon className="h-3 w-3" />
+                                {item.combo_name}
+                              </span>
+                            )}
                           </td>
                           <td className="py-2 text-gray-600">{item.variant?.size ?? '—'}</td>
                           <td className="py-2 text-gray-600">{item.variant?.color ?? '—'}</td>

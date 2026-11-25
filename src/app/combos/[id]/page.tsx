@@ -1,37 +1,26 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassPlusIcon, XMarkIcon, GiftIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassPlusIcon, XMarkIcon, GiftIcon, SparklesIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import { api, getImageForColor, imageSrc, tagBadgeStyle } from '@/lib/api';
 import type { Combo } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
-import { useCaptcha } from '@/lib/useCaptcha';
-import { RecaptchaNotice } from '@/components/RecaptchaChallenge';
-import { openWhatsAppOrStash } from '@/lib/contact';
+import { useCart } from '@/context/CartContext';
 
 export default function ComboDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
+  const { addCombo } = useCart();
   const [combo, setCombo] = useState<Combo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   // Para el gesto de swipe en móvil.
   const touchStartX = useRef<number | null>(null);
   // Selecciones de talla/color por producto del combo (clave = product_id).
   const [selections, setSelections] = useState<Record<number, { size: string | null; color: string | null }>>({});
-  // Datos del cliente para crear el pedido real.
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  // Modal de datos de contacto (se pide DESPUÉS de pulsar "Pedir").
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  // reCAPTCHA: v3 silencioso; si hace falta, aparece la casilla y el envío se repite solo.
-  const captcha = useCaptcha('combo_order');
   // Visor de imagen a pantalla completa (lightbox).
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -76,69 +65,6 @@ export default function ComboDetailPage() {
       document.body.style.overflow = prev;
     };
   }, [lightboxOpen]);
-
-  // Carga reCAPTCHA al abrir la ventana de contacto; al cerrarla se oculta la casilla.
-  useEffect(() => {
-    if (checkoutOpen) captcha.preload();
-    else captcha.reset();
-  }, [checkoutOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Paso 1: abre el modal de contacto (solo valida que haya selecciones).
-  const openCheckout = () => {
-    setFormError(null);
-    setCheckoutOpen(true);
-  };
-
-  // Paso 2: valida los datos de contacto y crea el pedido. Si algo falla, el
-  // modal permanece abierto y las selecciones del combo NO se pierden.
-  const submitOrder = async () => {
-    if (!combo) return;
-    setFormError(null);
-
-    // Validación: nombre y apellido (al menos dos palabras de 2+ letras).
-    const words = name.trim().split(/\s+/).filter((w) => w.length >= 2);
-    if (words.length < 2) {
-      setFormError('Ingresa tu nombre y apellido (al menos dos palabras).');
-      return;
-    }
-    // Validación: celular de 10 dígitos.
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length !== 10) {
-      setFormError('Ingresa un número de celular válido de 10 dígitos.');
-      return;
-    }
-
-    setSending(true);
-    try {
-      const payload = combo.items
-        .filter((it) => (it.product?.variants?.length ?? 0) > 0)
-        .map((it) => ({
-          product_id: it.product_id,
-          size: selections[it.product_id]?.size ?? null,
-          color: selections[it.product_id]?.color ?? null,
-        }));
-      const { order_id, token, whatsapp_url } = await api.combos.order(combo.id, {
-        customer_name: name.trim(),
-        customer_phone: phone.trim(),
-        selections: payload,
-        ...(await captcha.tokens()),
-      });
-      // Abre WhatsApp con el pedido listo y lleva a la página de éxito.
-      openWhatsAppOrStash(whatsapp_url);
-      const tokenQs = token ? `&token=${encodeURIComponent(token)}` : '';
-      router.push(`/checkout/success?order=${order_id}${tokenQs}`);
-    } catch (e) {
-      captcha.consume(); // si se envió con la casilla, ese token ya se gastó
-      if (captcha.handleError(e)) {
-        setFormError('Para continuar, confirma que eres una persona marcando la casilla.');
-        return;
-      }
-      setFormError(e instanceof Error ? e.message : 'No se pudo crear el pedido. Intenta de nuevo.');
-    } finally {
-      setSending(false);
-    }
-  };
-  captcha.retry.current = () => { void submitOrder(); };
 
   if (loading) {
     return (
@@ -543,103 +469,18 @@ export default function ComboDetailPage() {
             </p>
           ) : null}
 
-          {/* Botón: abre el modal de contacto (las selecciones se conservan) */}
+          {/* Agrega el combo (con las tallas y colores elegidos) al carrito, junto a los demás productos */}
           <button
-            onClick={openCheckout}
+            onClick={() => addCombo(combo, selections, 1)}
             disabled={!canOrder}
             className="mt-5 w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            Pedir este combo por WhatsApp
-            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.69 8.23-8.24 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.42-.14-.01-.31-.01-.47-.01-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z"/>
-            </svg>
+            <ShoppingBagIcon className="h-5 w-5" />
+            Agregar al carrito
           </button>
-          <p className="text-xs text-center text-gray-400 mt-2">Elegirás tus datos de contacto en el siguiente paso.</p>
+          <p className="text-xs text-center text-gray-400 mt-2">Puedes sumar más productos y pedir todo junto por WhatsApp.</p>
         </div>
       </div>
-
-      {/* Modal de datos de contacto (se abre tras pulsar "Pedir") */}
-      {checkoutOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          {/* Fondo */}
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => !sending && setCheckoutOpen(false)}
-            aria-hidden="true"
-          />
-          {/* Tarjeta */}
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Datos de contacto"
-            className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 m-0 sm:m-4"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-lg font-semibold text-gray-800">Tus datos de contacto</h2>
-              <button
-                onClick={() => !sending && setCheckoutOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600"
-                aria-label="Cerrar"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 mb-4">
-              Tu selección del combo se mantiene. Solo faltan tus datos para enviar el pedido.
-            </p>
-
-            <div className="space-y-3">
-              <div>
-                <label htmlFor="combo-name" className="block text-sm font-medium text-gray-700 mb-1">Nombre y apellido</label>
-                <input
-                  id="combo-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoComplete="name"
-                  placeholder="Ej: María García"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                />
-              </div>
-              <div>
-                <label htmlFor="combo-phone" className="block text-sm font-medium text-gray-700 mb-1">Tu teléfono / WhatsApp</label>
-                <input
-                  id="combo-phone"
-                  type="tel"
-                  inputMode="numeric"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  autoComplete="tel"
-                  placeholder="Ej: 3001234567"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                />
-                <p className="text-xs text-gray-400 mt-1">Número de celular de 10 dígitos.</p>
-              </div>
-
-              {formError && (
-                <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{formError}</p>
-              )}
-
-              {captcha.widget}
-
-              <button
-                onClick={submitOrder}
-                disabled={sending}
-                className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                {sending ? 'Creando pedido…' : 'Enviar pedido por WhatsApp'}
-              </button>
-              <button
-                onClick={() => !sending && setCheckoutOpen(false)}
-                className="w-full text-sm font-semibold text-gray-500 hover:text-gray-700 py-1"
-              >
-                Volver a la selección
-              </button>
-              <RecaptchaNotice className="text-center" />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Lightbox: imagen a pantalla completa con navegación */}
       {lightboxOpen && mainImage && (

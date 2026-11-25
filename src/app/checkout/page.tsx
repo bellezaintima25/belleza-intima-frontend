@@ -16,7 +16,7 @@ export default function CheckoutPage() {
   // reCAPTCHA: v3 silencioso; si hace falta, aparece la casilla y el envío se repite solo.
   const captcha = useCaptcha('checkout');
   useEffect(() => { captcha.preload(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const { items, total, clearCart } = useCart();
+  const { items, combos, total, clearCart } = useCart();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
@@ -31,9 +31,9 @@ export default function CheckoutPage() {
     const base = item.product.base_price;
     const final = effectivePrice(item.product, item.variant);
     return acc + (base - final) * item.quantity;
-  }, 0);
+  }, 0) + combos.reduce((acc, c) => acc + Math.max(0, c.originalPrice - c.finalPrice) * c.quantity, 0);
 
-  if (items.length === 0) {
+  if (items.length === 0 && combos.length === 0) {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center flex flex-col items-center">
         <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth={1.2} className="w-20 h-20 mb-4 text-primary-200">
@@ -94,10 +94,15 @@ export default function CheckoutPage() {
         customer_name: name.trim(),
         customer_phone: phone.trim(),
         customer_city: city.trim(),
+        // Los precios los calcula el servidor: aquí solo se dice qué se quiere y en qué cantidad.
         items: items.map((item) => ({
           variant_id: item.variant.id,
           quantity: item.quantity,
-          unit_price: effectivePrice(item.product, item.variant),
+        })),
+        combos: combos.map((c) => ({
+          combo_id: c.comboId,
+          quantity: c.quantity,
+          selections: c.items.map((i) => ({ product_id: i.productId, size: i.size || null, color: i.color || null })),
         })),
         ...(await captcha.tokens()),
       });
@@ -183,6 +188,31 @@ export default function CheckoutPage() {
               </div>
             );
           })}
+
+          {/* Combos del carrito */}
+          {combos.map((c) => (
+            <div key={c.lineId} className="rounded-xl bg-primary-50/50 border border-primary-100 p-3 text-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary-600">Combo{c.quantity > 1 ? ` × ${c.quantity}` : ''}</p>
+                  <p className="font-medium text-gray-800">{c.name}</p>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="font-semibold text-gray-800 nums">{formatPrice(c.finalPrice * c.quantity)}</p>
+                  {c.originalPrice > c.finalPrice && (
+                    <p className="text-xs text-gray-400 line-through nums">{formatPrice(c.originalPrice * c.quantity)}</p>
+                  )}
+                </div>
+              </div>
+              <ul className="mt-1.5 space-y-0.5 text-xs text-gray-500">
+                {c.items.map((i) => (
+                  <li key={i.productId}>
+                    {i.quantity * c.quantity}× {i.name}{i.size || i.color ? ` · ${[i.size, i.color].filter(Boolean).join(' · ')}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           <div className="border-t border-gray-100 pt-3 space-y-2">
             {totalSavings > 0 && (

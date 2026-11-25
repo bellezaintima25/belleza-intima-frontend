@@ -117,6 +117,10 @@ export interface OrderItemDetail {
   variant_id: number;
   quantity: number;
   unit_price: number;
+  /** Si la línea viene de un combo: cuál y a qué copia pertenece dentro del pedido. */
+  combo_id?: number | null;
+  combo_name?: string | null;
+  combo_group?: number | null;
   variant: {
     id: number;
     size: string;
