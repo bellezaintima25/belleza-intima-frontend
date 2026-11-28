@@ -30,7 +30,7 @@ type Offer =
   | { kind: 'product'; id: number; href: string; name: string; image: string | null; price: number; oldPrice: number; badge: string; weight: number };
 
 /**
- * Tira "Aprovecha estas ofertas" dentro del carrito: productos en oferta y combos que la clienta
+ * Tira "Pensado para ti" dentro del carrito: productos en oferta y combos que la clienta
  * todavía NO tiene. Lo que ya está en el carrito no se vuelve a mostrar (ni como suelto, ni dentro
  * de un combo), y cuando no queda nada que ofrecer, el bloque desaparece.
  */
@@ -102,9 +102,12 @@ export default function CartOffers({ onNavigate }: { onNavigate: () => void }) {
       aria-label="Ofertas para ti"
       className="rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-50 p-3"
     >
-      <div className="flex items-center gap-1.5 mb-2.5 px-1">
-        <SparklesIcon className="h-4 w-4 text-primary-600" />
-        <h3 className="text-sm font-bold text-primary-700">Aprovecha estas ofertas</h3>
+      <div className="flex items-start gap-2 mb-2.5 px-1">
+        <SparklesIcon className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary-600" />
+        <div>
+          <h3 className="text-sm font-bold leading-tight text-primary-700">Pensado para ti</h3>
+          <p className="text-xs italic text-gray-500">Esto te puede encantar</p>
+        </div>
       </div>
 
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 no-scrollbar">
