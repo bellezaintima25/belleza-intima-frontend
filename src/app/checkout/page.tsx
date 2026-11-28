@@ -41,8 +41,8 @@ export default function CheckoutPage() {
           <rect x="10" y="24" width="44" height="34" rx="6" strokeLinecap="round" />
           <path strokeLinecap="round" d="M26 36a6 6 0 0 0 12 0" />
         </svg>
-        <p className="font-serif text-lg text-gray-400 mb-1">Tu carrito está vacío</p>
-        <p className="text-sm text-gray-300 mb-6">Agrega algo que te haga brillar</p>
+        <p className="font-serif text-lg text-gray-500 mb-1">Tu carrito está vacío</p>
+        <p className="text-sm text-gray-500 mb-6">Agrega algo que te haga brillar</p>
         <Link href="/catalogo" className="text-primary-600 hover:text-primary-700 font-medium transition-colors">
           ← Ir al catálogo
         </Link>
@@ -169,11 +169,11 @@ export default function CheckoutPage() {
 
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 truncate">{item.product.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {item.variant.size} · {item.variant.color} × {item.quantity}
                   </p>
                   {hasDiscount && (
-                    <p className="text-xs text-gray-400 mt-0.5 line-through nums">
+                    <p className="text-xs text-gray-500 mt-0.5 line-through nums">
                       {formatPrice(item.product.base_price * item.quantity)}
                     </p>
                   )}
@@ -182,7 +182,7 @@ export default function CheckoutPage() {
                 <div className="flex-shrink-0 text-right">
                   <p className="font-semibold text-gray-800 nums">{formatPrice(price * item.quantity)}</p>
                   {hasDiscount && (
-                    <p className="text-xs text-green-600 font-medium">-{Math.round(item.product.discount_percent)}%</p>
+                    <p className="text-xs text-green-700 font-medium">-{Math.round(item.product.discount_percent)}%</p>
                   )}
                 </div>
               </div>
@@ -200,7 +200,7 @@ export default function CheckoutPage() {
                 <div className="flex-shrink-0 text-right">
                   <p className="font-semibold text-gray-800 nums">{formatPrice(c.finalPrice * c.quantity)}</p>
                   {c.originalPrice > c.finalPrice && (
-                    <p className="text-xs text-gray-400 line-through nums">{formatPrice(c.originalPrice * c.quantity)}</p>
+                    <p className="text-xs text-gray-500 line-through nums">{formatPrice(c.originalPrice * c.quantity)}</p>
                   )}
                 </div>
               </div>
@@ -216,7 +216,7 @@ export default function CheckoutPage() {
 
           <div className="border-t border-gray-100 pt-3 space-y-2">
             {totalSavings > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
+              <div className="flex justify-between text-sm text-green-700">
                 <span className="flex items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l2.25 2.25L15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -249,14 +249,14 @@ export default function CheckoutPage() {
               className={inputClass(!!nameError)}
             />
             {nameError ? (
-              <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3 flex-shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                 </svg>
                 {nameError}
               </p>
             ) : (
-              <p className="text-xs text-gray-400 mt-1.5">Escribe tu nombre y apellido.</p>
+              <p className="text-xs text-gray-500 mt-1.5">Escribe tu nombre y apellido.</p>
             )}
           </div>
 
@@ -275,14 +275,14 @@ export default function CheckoutPage() {
               className={inputClass(!!phoneError)}
             />
             {phoneError ? (
-              <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3 flex-shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                 </svg>
                 {phoneError}
               </p>
             ) : (
-              <p className="text-xs text-gray-400 mt-1.5">Número de celular de 10 dígitos.</p>
+              <p className="text-xs text-gray-500 mt-1.5">Número de celular de 10 dígitos.</p>
             )}
           </div>
 
@@ -300,14 +300,14 @@ export default function CheckoutPage() {
               className={inputClass(!!cityError)}
             />
             {cityError ? (
-              <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3 flex-shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                 </svg>
                 {cityError}
               </p>
             ) : (
-              <p className="text-xs text-gray-400 mt-1.5">Ciudad donde recibirás tu pedido.</p>
+              <p className="text-xs text-gray-500 mt-1.5">Ciudad donde recibirás tu pedido.</p>
             )}
           </div>
 
@@ -345,7 +345,7 @@ export default function CheckoutPage() {
             )}
           </button>
 
-          <p className="text-xs text-center text-gray-400">
+          <p className="text-xs text-center text-gray-500">
             Se abrirá WhatsApp con tu pedido listo para enviar.
           </p>
           <RecaptchaNotice className="text-center" />

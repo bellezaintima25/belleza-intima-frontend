@@ -139,7 +139,7 @@ export default function CartOffers({ onNavigate }: { onNavigate: () => void }) {
               <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
                 <span className="text-sm font-bold text-primary-600 nums">{formatPrice(o.price)}</span>
                 {o.oldPrice > o.price && (
-                  <span className="text-[11px] text-gray-400 line-through nums">{formatPrice(o.oldPrice)}</span>
+                  <span className="text-[11px] text-gray-500 line-through nums">{formatPrice(o.oldPrice)}</span>
                 )}
               </div>
               <Link

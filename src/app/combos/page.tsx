@@ -47,14 +47,14 @@ export default function CombosPage() {
           <p>{error}</p>
         </div>
       ) : combos.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
+        <div className="text-center py-20 text-gray-500">
           <GiftIcon className="h-14 w-14 mx-auto mb-3 text-primary-200" />
           <p>Muy pronto tendremos combos de promoción.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {combos.map((c, i) => (
-            <ComboCard key={c.id} combo={c} priority={i < 4} />
+            <ComboCard key={c.id} combo={c} priority={i < 4} as="h2" />
           ))}
         </div>
       )}

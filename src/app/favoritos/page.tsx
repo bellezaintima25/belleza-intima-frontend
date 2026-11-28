@@ -15,7 +15,7 @@ export default function FavoritesPage() {
         {count > 0 && (
           <button
             onClick={clear}
-            className="text-sm font-medium text-gray-400 hover:text-primary-600 transition-colors"
+            className="text-sm font-medium text-gray-500 hover:text-primary-600 transition-colors"
           >
             Vaciar lista
           </button>
@@ -36,7 +36,7 @@ export default function FavoritesPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} as="h2" />
           ))}
         </div>
       )}

@@ -41,7 +41,7 @@ function ParallaxWatermark() {
             width={900}
             height={900}
             className="opacity-[0.018] select-none h-auto max-w-none w-[120vw] md:w-[900px]"
-            priority={false}
+            loading="eager"
           />
         </div>
       </div>

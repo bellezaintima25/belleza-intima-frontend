@@ -91,7 +91,7 @@ export default function CategoryCarousel({ categories }: { categories: Category[
           >
             <Image
               src={cat.image}
-              alt={categoryLabel(cat.key)}
+              alt=""
               fill
               sizes="(max-width: 768px) 160px, 25vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"

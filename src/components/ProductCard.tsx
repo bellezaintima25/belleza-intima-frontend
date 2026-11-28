@@ -12,9 +12,11 @@ import { useFavorites } from '@/context/FavoritesContext';
 interface Props {
   product: Product;
   priority?: boolean;
+  /** Nivel del título: h3 dentro de una sección con título (inicio); h2 en páginas de listado. */
+  as?: 'h2' | 'h3';
 }
 
-export default function ProductCard({ product, priority = false }: Props) {
+export default function ProductCard({ product, priority = false, as: Heading = 'h3' }: Props) {
   // Show the first available image (no specific color preference on the card)
   const imageUrl = getImageForColor(product.images);
   const { isFavorite, toggle } = useFavorites();
@@ -74,16 +76,16 @@ export default function ProductCard({ product, priority = false }: Props) {
         </button>
       </div>
       <div className="p-4">
-        <span className="inline-block text-xs font-semibold text-primary-200 uppercase tracking-wider mb-1">
+        <span className="inline-block text-xs font-semibold text-primary-600/80 uppercase tracking-wider mb-1">
           {categoryLabel(product.category)}
         </span>
-        <h3 className="font-serif text-lg text-gray-800 group-hover:text-primary-700 transition-colors leading-tight">
+        <Heading className="font-serif text-lg text-gray-800 group-hover:text-primary-700 transition-colors leading-tight">
           {product.name}
-        </h3>
+        </Heading>
         {product.on_sale ? (
           <p className="mt-1 flex items-baseline gap-2">
             <span className="text-primary-600 font-bold nums">{formatPrice(product.final_price)}</span>
-            <span className="text-xs text-gray-400 line-through nums">{formatPrice(product.base_price)}</span>
+            <span className="text-xs text-gray-500 line-through nums">{formatPrice(product.base_price)}</span>
           </p>
         ) : (
           <p className="mt-1 text-primary-600 font-bold nums">{formatPrice(product.base_price)}</p>

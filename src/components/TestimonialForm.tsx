@@ -151,7 +151,7 @@ export default function TestimonialForm({ open, onClose }: Props) {
         <button
           type="button"
           onClick={close}
-          className="absolute top-3 right-3 h-9 w-9 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+          className="absolute top-3 right-3 h-9 w-9 rounded-full text-gray-500 hover:text-gray-600 hover:bg-gray-100 flex items-center justify-center"
           aria-label="Cerrar"
         >
           <XMarkIcon className="h-5 w-5" />
@@ -203,7 +203,7 @@ export default function TestimonialForm({ open, onClose }: Props) {
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-400 -mt-3">
+            <p className="text-xs text-gray-500 -mt-3">
               {name
                 ? <>Se mostrará como: <span className="font-semibold text-gray-600">{name}</span></>
                 : 'Por tu privacidad, solo mostramos tu nombre y la inicial de tu apellido.'}
@@ -240,7 +240,7 @@ export default function TestimonialForm({ open, onClose }: Props) {
                 placeholder="Cuéntanos qué te gustó: la calidad, el ajuste, la atención…"
                 onChange={(e) => setText(e.target.value)}
               />
-              <p className={`text-xs text-right mt-1 ${text.length > MAX_TEXT - 40 ? 'text-amber-600' : 'text-gray-400'}`}>
+              <p className={`text-xs text-right mt-1 ${text.length > MAX_TEXT - 40 ? 'text-amber-600' : 'text-gray-500'}`}>
                 {text.length}/{MAX_TEXT}
               </p>
             </div>
@@ -268,7 +268,7 @@ export default function TestimonialForm({ open, onClose }: Props) {
                   {uploading ? 'Subiendo…' : photoUrl ? 'Cambiar foto' : 'Subir foto'}
                 </button>
                 {photoUrl && (
-                  <button type="button" onClick={() => setPhotoUrl('')} className="text-xs text-rose-500 hover:underline">
+                  <button type="button" onClick={() => setPhotoUrl('')} className="text-xs text-rose-700 hover:underline">
                     Quitar
                   </button>
                 )}

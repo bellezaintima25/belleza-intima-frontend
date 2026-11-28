@@ -132,7 +132,7 @@ function MiPedidoContent() {
             />
           </div>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+          {error && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 
           {captcha.widget}
 
@@ -152,7 +152,7 @@ function MiPedidoContent() {
 
 export default function MiPedidoPage() {
   return (
-    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-20 text-center text-gray-400">Cargando…</div>}>
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-20 text-center text-gray-500">Cargando…</div>}>
       <MiPedidoContent />
     </Suspense>
   );

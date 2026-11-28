@@ -94,7 +94,7 @@ function SuccessContent() {
             done: false,
           },
         ].map((step, i) => (
-          <div key={i} className={`flex flex-col items-center text-center p-3 rounded-2xl border ${step.done ? 'bg-green-50 border-green-100 text-green-600' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+          <div key={i} className={`flex flex-col items-center text-center p-3 rounded-2xl border ${step.done ? 'bg-green-50 border-green-100 text-green-700' : 'bg-gray-50 border-gray-100 text-gray-500'}`}>
             {step.icon}
             <p className="text-xs font-medium mt-2">{step.label}</p>
           </div>
@@ -106,7 +106,7 @@ function SuccessContent() {
         <div className="bg-white rounded-2xl h-56 animate-pulse border border-gray-100" />
       ) : order ? (
         <>
-          <p className="text-sm text-gray-400 mb-3 text-center">Guarda este comprobante:</p>
+          <p className="text-sm text-gray-500 mb-3 text-center">Guarda este comprobante:</p>
           <OrderTrackView order={order} />
           <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -122,7 +122,7 @@ function SuccessContent() {
               Seguir comprando
             </Link>
           </div>
-          <p className="text-xs text-center text-gray-400 mt-4">
+          <p className="text-xs text-center text-gray-500 mt-4">
             Número de pedido: <span className="font-semibold nums text-gray-600">{orderNumber(order.id)}</span>
           </p>
         </>
@@ -152,7 +152,7 @@ function SuccessContent() {
 
 export default function SuccessPage() {
   return (
-    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-20 text-center text-gray-400">Cargando…</div>}>
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-20 text-center text-gray-500">Cargando…</div>}>
       <SuccessContent />
     </Suspense>
   );

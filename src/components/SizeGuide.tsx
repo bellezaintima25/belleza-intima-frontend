@@ -66,7 +66,7 @@ export default function SizeGuide() {
               </button>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-400">Belleza Íntima</p>
               <h2 className="mt-1 font-serif text-2xl font-semibold text-primary-700">Guía de tallas</h2>
-              <p className="mt-1 text-xs text-gray-400">Encuentra tu talla ideal · medidas en centímetros</p>
+              <p className="mt-1 text-xs text-gray-500">Encuentra tu talla ideal · medidas en centímetros</p>
             </div>
 
             {/* Tabla */}
@@ -111,7 +111,7 @@ export default function SizeGuide() {
                   lados y se adaptan cómodamente a diferentes tallas.
                 </p>
               </div>
-              <p className="text-[11px] text-gray-400 mt-3 text-center">
+              <p className="text-[11px] text-gray-500 mt-3 text-center">
                 * Medidas referenciales. Pueden variar levemente según el modelo.
               </p>
             </div>

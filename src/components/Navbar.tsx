@@ -283,11 +283,11 @@ export default function Navbar() {
                 placeholder="Buscar..."
                 className="w-36 sm:w-52 pl-9 pr-8 py-2 rounded-full border border-gray-200 bg-white text-sm text-primary-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
               />
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
               <button
                 type="button"
                 onClick={() => { setSearchOpen(false); setQuery(''); }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
                 aria-label="Cerrar búsqueda"
               >
                 <XMarkIcon className="h-4 w-4" />
@@ -359,12 +359,12 @@ export default function Navbar() {
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Belleza Íntima" width={40} height={40} />
+            <Image src="/logo.svg" alt="" width={40} height={40} />
             <span className="font-serif text-base font-semibold text-primary-600">Belleza Íntima</span>
           </div>
           <button
             onClick={() => setMenuOpen(false)}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-gray-500 hover:text-gray-600 transition-colors"
             aria-label="Cerrar menú"
           >
             <XMarkIcon className="h-5 w-5" />

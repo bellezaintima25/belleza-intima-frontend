@@ -106,7 +106,7 @@ export default function RecaptchaChallenge({ onToken, onExpired, resetKey }: Pro
 export function RecaptchaNotice({ className = '' }: { className?: string }) {
   if (!recaptchaEnabled) return null;
   return (
-    <p className={`text-[11px] leading-snug text-gray-400 ${className}`}>
+    <p className={`text-[11px] leading-snug text-gray-500 ${className}`}>
       Este sitio está protegido por reCAPTCHA y se aplican la{' '}
       <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline">
         Política de privacidad

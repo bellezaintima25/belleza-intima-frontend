@@ -118,7 +118,7 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-gray-400">
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-gray-500">
         <p>{error ?? 'Producto no encontrado.'}</p>
         <button onClick={() => router.back()} className="mt-4 text-primary-600 hover:underline">
           ← Volver
@@ -453,7 +453,7 @@ export default function ProductDetailPage() {
 
         {/* Info */}
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-primary-200 uppercase tracking-wider">
+          <span className="text-sm font-semibold text-primary-600/80 uppercase tracking-wider">
             {categoryLabel(product.category)}
           </span>
           <h1 className="mt-1 font-serif text-3xl font-semibold text-primary-700">{product.name}</h1>
@@ -461,8 +461,8 @@ export default function ProductDetailPage() {
             {product.on_sale ? (
               <span className="flex items-baseline gap-2 flex-wrap">
                 <span>{formatPrice(price)}</span>
-                <span className="text-base text-gray-400 line-through font-medium">{formatPrice(basePrice)}</span>
-                <span className="text-sm text-emerald-600 font-semibold">-{Math.round(product.discount_percent)}%</span>
+                <span className="text-base text-gray-500 line-through font-medium">{formatPrice(basePrice)}</span>
+                <span className="text-sm text-emerald-700 font-semibold">-{Math.round(product.discount_percent)}%</span>
               </span>
             ) : (
               formatPrice(price)
@@ -552,18 +552,18 @@ export default function ProductDetailPage() {
               </div>
             )}
             {combinationInvalid && (
-              <p className="text-gray-400">Esta combinación no está disponible.</p>
+              <p className="text-gray-500">Esta combinación no está disponible.</p>
             )}
             {selectedVariant && !outOfStock && (
               selectedVariant.stock <= 3 ? (
-                <p className="text-amber-500 font-medium flex items-center gap-1.5">
+                <p className="text-amber-700 font-medium flex items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4 flex-shrink-0">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                   </svg>
                   ¡Solo quedan {selectedVariant.stock} unidad{selectedVariant.stock !== 1 ? 'es' : ''}!
                 </p>
               ) : (
-                <p className="text-gray-400">
+                <p className="text-gray-500">
                   Disponibles: {selectedVariant.stock} unidades
                 </p>
               )
@@ -578,7 +578,7 @@ export default function ProductDetailPage() {
                 ? 'bg-green-500 text-white'
                 : selectedVariant && !outOfStock && canAddMore
                 ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-100 text-gray-500 cursor-not-allowed'
             }`}
           >
             {added ? (
@@ -617,7 +617,7 @@ export default function ProductDetailPage() {
                 <WhatsAppIcon className="w-5 h-5" />
                 Avísame cuando vuelva
               </a>
-              <p className="text-xs text-center text-gray-400 mt-2">
+              <p className="text-xs text-center text-gray-500 mt-2">
                 Se abrirá WhatsApp con tu mensaje listo para enviar.
               </p>
             </div>

@@ -90,7 +90,7 @@ function CatalogContent() {
 
       {/* Results count when searching */}
       {search && !loading && (
-        <p className="text-sm text-gray-400 mb-4 text-center">
+        <p className="text-sm text-gray-500 mb-4 text-center">
           {filtered.length === 0
             ? `Sin resultados para "${search}"`
             : `${filtered.length} resultado${filtered.length !== 1 ? 's' : ''} para "${search}"`}
@@ -116,7 +116,7 @@ function CatalogContent() {
           <p>{error}</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
+        <div className="text-center py-20 text-gray-500">
           {search ? (
             <p>No encontramos &quot;{search}&quot;.</p>
           ) : selected === 'COMBO' ? (
@@ -136,7 +136,7 @@ function CatalogContent() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((p, i) => (
-            <ProductCard key={p.id} product={p} priority={i < 4} />
+            <ProductCard key={p.id} product={p} priority={i < 4} as="h2" />
           ))}
         </div>
       )}
@@ -148,7 +148,7 @@ function CatalogContent() {
 
 export default function CatalogPage() {
   return (
-    <Suspense fallback={<div className="max-w-6xl mx-auto px-4 py-20 text-center text-gray-400">Cargando...</div>}>
+    <Suspense fallback={<div className="max-w-6xl mx-auto px-4 py-20 text-center text-gray-500">Cargando...</div>}>
       <CatalogContent />
     </Suspense>
   );

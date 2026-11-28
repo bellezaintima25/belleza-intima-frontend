@@ -132,7 +132,7 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
           <ArrowLeftIcon className="h-6 w-6" />
         </button>
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+          <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 pointer-events-none" />
           <input
             ref={inputRef}
             autoFocus
@@ -155,7 +155,7 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
             <button
               type="button"
               onClick={() => { onQueryChange(''); inputRef.current?.focus(); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-600"
               aria-label="Borrar lo escrito"
             >
               <XMarkIcon className="h-5 w-5" />
@@ -169,7 +169,7 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
         {recentMatches.length > 0 && (
           <section aria-labelledby="ms-recent">
             <div className="flex items-center justify-between">
-              <h2 id="ms-recent" className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <h2 id="ms-recent" className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                 {trimmed ? 'De tus búsquedas' : 'Búsquedas recientes'}
               </h2>
               {!trimmed && (
@@ -208,7 +208,7 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
         )}
 
         {!trimmed && recent.length === 0 && (
-          <p className="pt-2 text-sm text-gray-400">
+          <p className="pt-2 text-sm text-gray-500">
             Escribe el nombre de una prenda, una categoría o un código. Tus búsquedas quedarán aquí para repetirlas con un toque.
           </p>
         )}
@@ -239,7 +239,7 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
               </button>
             ) : shown.length > 0 ? (
               <>
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Productos</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Productos</h2>
                 <ul>
                   {shown.map((p) => {
                     const img = getImageForColor(p.images);
@@ -255,14 +255,14 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
                           </span>
                           <span className="flex-1 min-w-0">
                             <span className="block truncate text-sm font-semibold text-gray-800">{p.name}</span>
-                            <span className="block text-xs text-gray-400">{categoryLabel(p.category)}</span>
+                            <span className="block text-xs text-gray-500">{categoryLabel(p.category)}</span>
                           </span>
                           <span className="flex-shrink-0 text-right nums">
                             <span className="block text-sm font-bold text-primary-600">
                               {formatPrice(p.on_sale ? p.final_price : p.base_price)}
                             </span>
                             {p.on_sale && (
-                              <span className="block text-xs text-gray-400 line-through">{formatPrice(p.base_price)}</span>
+                              <span className="block text-xs text-gray-500 line-through">{formatPrice(p.base_price)}</span>
                             )}
                           </span>
                         </button>
@@ -284,7 +284,7 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
             ) : (
               <div className="py-6 text-center">
                 <p className="font-medium text-gray-600">No encontramos “{trimmed}”</p>
-                <p className="mt-1 text-sm text-gray-400">Revisa cómo está escrito o prueba con una categoría.</p>
+                <p className="mt-1 text-sm text-gray-500">Revisa cómo está escrito o prueba con una categoría.</p>
               </div>
             )}
           </section>
@@ -293,7 +293,7 @@ export default function MobileSearch({ open, onClose, query, onQueryChange, cate
         {/* Atajos a las categorías */}
         {showCategories && (
           <section className="mt-6" aria-labelledby="ms-cats">
-            <h2 id="ms-cats" className="text-xs font-semibold uppercase tracking-wider text-gray-400">Categorías</h2>
+            <h2 id="ms-cats" className="text-xs font-semibold uppercase tracking-wider text-gray-500">Categorías</h2>
             <div className="mt-2 flex flex-wrap gap-2">
               {chips.map((c) => (
                 <button

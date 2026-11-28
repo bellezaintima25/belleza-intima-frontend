@@ -11,10 +11,12 @@ import type { Combo } from '@/lib/api';
 interface Props {
   combo: Combo;
   priority?: boolean;
+  /** Nivel del título: h3 dentro de una sección con título (inicio); h2 en páginas de listado. */
+  as?: 'h2' | 'h3';
 }
 
 /** Tarjeta de combo para la tienda, al mismo estilo que ProductCard. */
-export default function ComboCard({ combo, priority = false }: Props) {
+export default function ComboCard({ combo, priority = false, as: Heading = 'h3' }: Props) {
   // Imagen: portada del combo, o la primera de su galería, o la del primer producto.
   const galleryFirst = [...(combo.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? null;
   const fallbackImg = combo.items.find((it) => it.product?.images?.length)?.product?.images?.[0]?.url ?? null;
@@ -63,16 +65,16 @@ export default function ComboCard({ combo, priority = false }: Props) {
       </div>
 
       <div className="p-4">
-        <span className="inline-block text-xs font-semibold text-primary-200 uppercase tracking-wider mb-1">
+        <span className="inline-block text-xs font-semibold text-primary-600/80 uppercase tracking-wider mb-1">
           Combo · {combo.items.length} producto{combo.items.length !== 1 ? 's' : ''}
         </span>
-        <h3 className="font-serif text-lg text-gray-800 group-hover:text-primary-700 transition-colors leading-tight">
+        <Heading className="font-serif text-lg text-gray-800 group-hover:text-primary-700 transition-colors leading-tight">
           {combo.name}
-        </h3>
+        </Heading>
         <div className="mt-1 flex items-baseline gap-2">
           <p className="text-primary-600 font-bold nums">{formatPrice(combo.final_price)}</p>
           {combo.savings > 0 && (
-            <span className="text-xs text-gray-400 line-through nums">{formatPrice(combo.original_price)}</span>
+            <span className="text-xs text-gray-500 line-through nums">{formatPrice(combo.original_price)}</span>
           )}
         </div>
       </div>

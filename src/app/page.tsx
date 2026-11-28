@@ -260,7 +260,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {testimonials.map((t) => (
                 <figure key={t.id} className="bg-white rounded-2xl shadow-sm ring-1 ring-primary-100/60 p-5 flex flex-col">
-                  <div className="flex items-center gap-0.5 mb-3" aria-label={`${t.rating} de 5 estrellas`}>
+                  <div className="flex items-center gap-0.5 mb-3" role="img" aria-label={`${t.rating} de 5 estrellas`}>
                     {[1, 2, 3, 4, 5].map((n) => (
                       <StarIcon key={n} className={`h-4 w-4 ${n <= t.rating ? 'text-amber-400' : 'text-gray-200'}`} aria-hidden="true" />
                     ))}

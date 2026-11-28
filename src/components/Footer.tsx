@@ -15,15 +15,15 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
       <footer className="relative z-20 bg-white border-t border-primary-100 mt-16">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link href="/admin" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Belleza Íntima" width={36} height={36} />
+            <Image src="/logo.svg" alt="" width={36} height={36} />
             <span className="font-serif text-base font-semibold text-primary-600">Belleza Íntima</span>
           </Link>
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-gray-500 text-center">
             © {new Date().getFullYear()} Belleza Íntima. Todos los derechos reservados.
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-primary-600 transition-colors group"
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary-600 transition-colors group"
             aria-label="Volver arriba"
           >
             Volver arriba
@@ -44,10 +44,10 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
           {/* Brand */}
           <div className="flex flex-col items-center sm:items-start gap-3">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.svg" alt="Belleza Íntima" width={48} height={48} />
+              <Image src="/logo.svg" alt="" width={48} height={48} />
               <span className="font-serif text-lg font-semibold text-primary-600">Belleza Íntima</span>
             </Link>
-            <p className="text-sm text-gray-400 leading-relaxed">
+            <p className="text-sm text-gray-500 leading-relaxed">
               Tu belleza, tu esencia, tu momento.<br />
               Lencería que celebra la mujer que eres.
             </p>
@@ -121,7 +121,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
               </a>
             </div>
 
-            <p className="text-gray-400 text-xs mt-4 leading-relaxed">
+            <p className="text-gray-500 text-xs mt-4 leading-relaxed">
               Pedidos y consultas por WhatsApp.<br />
               Respondemos a la mayor brevedad.
             </p>
@@ -130,12 +130,12 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
 
         {/* Bottom bar */}
         <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             © {new Date().getFullYear()} Belleza Íntima. Todos los derechos reservados.
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-primary-600 transition-colors group"
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary-600 transition-colors group"
             aria-label="Volver arriba"
           >
             Volver arriba

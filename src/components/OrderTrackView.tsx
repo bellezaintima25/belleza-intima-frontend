@@ -44,13 +44,13 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
       {/* Encabezado */}
       <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Pedido</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Pedido</p>
           <p className="text-xl font-bold text-gray-800 nums">{orderNumber(order.id)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">A nombre de {order.customer_name}</p>
+          <p className="text-xs text-gray-500 mt-0.5">A nombre de {order.customer_name}</p>
           {order.customer_city && (
-            <p className="text-xs text-gray-400">Ciudad: {order.customer_city}</p>
+            <p className="text-xs text-gray-500">Ciudad: {order.customer_city}</p>
           )}
-          <p className="text-xs text-gray-400">Realizado el {fmtDate(order.created_at)}</p>
+          <p className="text-xs text-gray-500">Realizado el {fmtDate(order.created_at)}</p>
           {order.combo_name && (
             <p className="flex items-center gap-1.5 text-xs text-primary-600 mt-1">
               <GiftIcon className="h-3.5 w-3.5 flex-shrink-0" />
@@ -59,7 +59,7 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
           )}
         </div>
         <div className="text-right">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Total</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Total</p>
           <p className="text-xl font-bold text-primary-600 nums">{formatPrice(order.total)}</p>
         </div>
       </div>
@@ -86,12 +86,12 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
                 )}
                 <span
                   className={`relative z-10 flex items-center justify-center h-8 w-8 rounded-full text-sm transition-colors ${
-                    done ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-400'
+                    done ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500'
                   } ${current ? 'ring-4 ring-primary-100' : ''}`}
                 >
                   <step.Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
-                <span className={`mt-1.5 text-[11px] text-center leading-tight ${done ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
+                <span className={`mt-1.5 text-[11px] text-center leading-tight ${done ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
                   {step.label}
                 </span>
               </li>
@@ -119,17 +119,17 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
               <div className="min-w-0">
                 <p className="text-gray-800 truncate">{it.quantity}× {it.product_name}</p>
                 {(it.size || it.color) && (
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-500">
                     {[it.size && `Talla: ${it.size}`, it.color && `Color: ${it.color}`].filter(Boolean).join(' · ')}
                   </p>
                 )}
                 {it.line_savings > 0 && (
-                  <p className="text-xs text-emerald-600 font-medium">Ahorras {formatPrice(it.line_savings)}</p>
+                  <p className="text-xs text-emerald-700 font-medium">Ahorras {formatPrice(it.line_savings)}</p>
                 )}
               </div>
               <span className="flex-shrink-0 ml-2 text-right">
                 {it.line_savings > 0 && (
-                  <span className="block text-xs text-gray-400 line-through nums">{formatPrice(it.line_original)}</span>
+                  <span className="block text-xs text-gray-500 line-through nums">{formatPrice(it.line_original)}</span>
                 )}
                 <span className="font-medium text-gray-700 nums">{formatPrice(it.line_total)}</span>
               </span>
@@ -146,8 +146,8 @@ export default function OrderTrackView({ order, printable = true }: { order: Ord
                 <span className="line-through nums">{formatPrice(order.original_total)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-emerald-600 font-medium">Ahorro total</span>
-                <span className="text-emerald-600 font-semibold nums">−{formatPrice(order.savings)}</span>
+                <span className="text-emerald-700 font-medium">Ahorro total</span>
+                <span className="text-emerald-700 font-semibold nums">−{formatPrice(order.savings)}</span>
               </div>
             </>
           )}

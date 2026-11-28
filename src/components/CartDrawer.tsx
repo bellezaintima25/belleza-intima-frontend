@@ -10,14 +10,14 @@ import { getImageForColor, effectivePrice, imageSrc } from '@/lib/api';
 
 function EmptyBag() {
   return (
-    <div className="text-center py-20 text-gray-400 flex flex-col items-center">
+    <div className="text-center py-20 text-gray-500 flex flex-col items-center">
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth={1.2} className="w-20 h-20 mb-4 text-primary-200">
         <path strokeLinecap="round" strokeLinejoin="round" d="M20 24V18a12 12 0 0 1 24 0v6" />
         <rect x="10" y="24" width="44" height="34" rx="6" strokeLinecap="round" />
         <path strokeLinecap="round" d="M26 36a6 6 0 0 0 12 0" />
       </svg>
-      <p className="font-serif text-lg text-gray-400">Tu carrito está vacío</p>
-      <p className="text-sm text-gray-300 mt-1">Agrega algo que te haga brillar</p>
+      <p className="font-serif text-lg text-gray-500">Tu carrito está vacío</p>
+      <p className="text-sm text-gray-500 mt-1">Agrega algo que te haga brillar</p>
     </div>
   );
 }
@@ -63,7 +63,7 @@ export default function CartDrawer() {
           </h2>
           <button
             onClick={closeCart}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-100"
+            className="p-2 text-gray-500 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-100"
             aria-label="Cerrar carrito"
           >
             <XMarkIcon className="h-5 w-5" />
@@ -105,15 +105,15 @@ export default function CartDrawer() {
 
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-800 text-sm leading-tight">{item.product.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       Talla: {item.variant.size} · Color: {item.variant.color}
                     </p>
                     <div className="flex items-baseline gap-2 mt-1">
                       <p className="text-primary-600 font-bold text-sm nums">{formatPrice(price)}</p>
                       {hasDiscount && (
                         <>
-                          <p className="text-xs text-gray-400 line-through nums">{formatPrice(item.product.base_price)}</p>
-                          <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full nums">
+                          <p className="text-xs text-gray-500 line-through nums">{formatPrice(item.product.base_price)}</p>
+                          <span className="text-xs font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full nums">
                             -{Math.round(item.product.discount_percent)}%
                           </span>
                         </>
@@ -139,7 +139,7 @@ export default function CartDrawer() {
                         +
                       </button>
                       {item.quantity >= item.variant.stock && (
-                        <span className="text-xs text-amber-500">máx.</span>
+                        <span className="text-xs text-amber-700">máx.</span>
                       )}
                     </div>
                   </div>
@@ -187,8 +187,8 @@ export default function CartDrawer() {
                     <p className="text-primary-600 font-bold text-sm nums">{formatPrice(c.finalPrice)}</p>
                     {saving > 0 && (
                       <>
-                        <p className="text-xs text-gray-400 line-through nums">{formatPrice(c.originalPrice)}</p>
-                        <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full nums">
+                        <p className="text-xs text-gray-500 line-through nums">{formatPrice(c.originalPrice)}</p>
+                        <span className="text-xs font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full nums">
                           ahorras {formatPrice(saving)}
                         </span>
                       </>
@@ -212,7 +212,7 @@ export default function CartDrawer() {
                     >
                       +
                     </button>
-                    {c.quantity >= max && <span className="text-xs text-amber-500">máx.</span>}
+                    {c.quantity >= max && <span className="text-xs text-amber-700">máx.</span>}
                   </div>
                 </div>
 
@@ -250,7 +250,7 @@ export default function CartDrawer() {
               <span>Subtotal</span>
               <span className="font-bold text-gray-900 nums">{formatPrice(total)}</span>
             </div>
-            <p className="text-xs text-gray-400">El pago se coordina por WhatsApp</p>
+            <p className="text-xs text-gray-500">El pago se coordina por WhatsApp</p>
             <Link
               href="/checkout"
               onClick={closeCart}

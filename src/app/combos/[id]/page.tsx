@@ -267,15 +267,17 @@ export default function ComboDetailPage() {
                 </button>
 
                 {/* Indicadores (puntos) */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 flex">
                   {thumbs.map((_, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setActiveIndex(i)}
                       aria-label={`Ir a la imagen ${i + 1}`}
-                      className={`h-2 rounded-full transition-all ${i === safeIndex ? 'w-5 bg-white' : 'w-2 bg-white/60 hover:bg-white/90'}`}
-                    />
+                      className="flex h-6 w-6 items-center justify-center"
+                    >
+                      <span className={`block h-2 rounded-full transition-all ${i === safeIndex ? 'w-5 bg-white' : 'w-2 bg-white/60 hover:bg-white/90'}`} />
+                    </button>
                   ))}
                 </div>
               </>
@@ -290,6 +292,7 @@ export default function ComboDetailPage() {
                   key={url}
                   type="button"
                   onClick={() => setActiveIndex(i)}
+                  aria-label={`Ver imagen ${i + 1}`}
                   className={`relative h-16 w-14 rounded-lg overflow-hidden border-2 transition-colors ${
                     i === safeIndex ? 'border-primary-600' : 'border-transparent hover:border-primary-300'
                   }`}
@@ -304,7 +307,7 @@ export default function ComboDetailPage() {
         {/* Detalle */}
         <div>
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="inline-block text-xs font-semibold text-primary-300 uppercase tracking-wider">
+            <span className="inline-block text-xs font-semibold text-primary-600/80 uppercase tracking-wider">
               Combo especial
             </span>
             {combo.tag && (
@@ -323,11 +326,11 @@ export default function ComboDetailPage() {
           <div className="mt-5 flex items-baseline gap-3">
             <span className="text-3xl font-bold text-primary-600 nums">{formatPrice(combo.final_price)}</span>
             {combo.savings > 0 && (
-              <span className="text-lg text-gray-400 line-through nums">{formatPrice(combo.original_price)}</span>
+              <span className="text-lg text-gray-500 line-through nums">{formatPrice(combo.original_price)}</span>
             )}
           </div>
           {combo.savings > 0 && (
-            <p className="text-emerald-600 font-semibold text-sm mt-1">
+            <p className="text-emerald-700 font-semibold text-sm mt-1">
               Ahorras {formatPrice(combo.savings)} ({combo.savings_percent}%)
             </p>
           )}
@@ -380,10 +383,10 @@ export default function ComboDetailPage() {
                             Se fue volando
                           </span>
                         )}
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-500">
                           {formatPrice(it.unit_price)} c/u
                           {it.line_savings > 0 && (
-                            <span className="text-emerald-600 font-semibold ml-2">ahorras {formatPrice(it.line_savings)}</span>
+                            <span className="text-emerald-700 font-semibold ml-2">ahorras {formatPrice(it.line_savings)}</span>
                           )}
                         </p>
                       </div>
@@ -444,11 +447,11 @@ export default function ComboDetailPage() {
                         ) : chosenSoldOut ? (
                           <p className="text-xs text-primary-600">Esta combinación se fue volando. Elige otra talla o color, o vuelve a mirar pronto.</p>
                         ) : chosenInsufficient ? (
-                          <p className="text-xs text-rose-500">
+                          <p className="text-xs text-rose-700">
                             Quedan {chosen?.stock} y el combo necesita {it.quantity}. Elige otra combinación.
                           </p>
                         ) : chosen ? (
-                          <p className="text-xs text-gray-400">Disponible: quedan {chosen.stock}.</p>
+                          <p className="text-xs text-gray-500">Disponible: quedan {chosen.stock}.</p>
                         ) : null}
                       </div>
                     )}
@@ -478,7 +481,7 @@ export default function ComboDetailPage() {
             <ShoppingBagIcon className="h-5 w-5" />
             Agregar al carrito
           </button>
-          <p className="text-xs text-center text-gray-400 mt-2">Puedes sumar más productos y pedir todo junto por WhatsApp.</p>
+          <p className="text-xs text-center text-gray-500 mt-2">Puedes sumar más productos y pedir todo junto por WhatsApp.</p>
         </div>
       </div>
 

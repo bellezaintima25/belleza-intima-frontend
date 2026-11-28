@@ -400,8 +400,8 @@ export function tagBadgeStyle(color: string | null | undefined): {
   const MAP: Record<string, { bg: string; text: string; border: string }> = {
     'primary-600': { bg: '#f7e8ee', text: '#8B1A3A', border: '#e4c4cf' }, // vino
     '#dc2626':     { bg: '#fde8e8', text: '#b91c1c', border: '#f6caca' }, // rojo
-    '#f97316':     { bg: '#fdecd8', text: '#c2560c', border: '#f8d5ad' }, // naranja
-    '#16a34a':     { bg: '#e3f5e8', text: '#15803d', border: '#bfe7ca' }, // verde
+    '#f97316':     { bg: '#fdecd8', text: '#a8480a', border: '#f8d5ad' }, // naranja
+    '#16a34a':     { bg: '#e3f5e8', text: '#14703a', border: '#bfe7ca' }, // verde
     '#2563eb':     { bg: '#e6edfd', text: '#1d4ed8', border: '#c5d6fa' }, // azul
     '#7c3aed':     { bg: '#eee6fb', text: '#6d28d9', border: '#d7c6f5' }, // morado
     '#db2777':     { bg: '#fce4f0', text: '#be185d', border: '#f6c3dd' }, // rosa

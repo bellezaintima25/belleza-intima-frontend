@@ -46,14 +46,14 @@ export default function EspecialesPage() {
           <p>{error}</p>
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
+        <div className="text-center py-20 text-gray-500">
           <TagIcon className="h-14 w-14 mx-auto mb-3 text-primary-200" />
           <p>Por ahora no hay productos en descuento.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {products.map((p, i) => (
-            <ProductCard key={p.id} product={p} priority={i < 4} />
+            <ProductCard key={p.id} product={p} priority={i < 4} as="h2" />
           ))}
         </div>
       )}
