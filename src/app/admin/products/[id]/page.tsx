@@ -85,7 +85,7 @@ export default function EditProductPage() {
             <button
               type="button"
               onClick={editName}
-              title="Cambiar el nombre"
+              title="Editar nombre y código"
               aria-label="Cambiar el nombre del producto"
               className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
             >

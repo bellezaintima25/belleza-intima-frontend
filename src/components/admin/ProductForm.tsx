@@ -100,7 +100,29 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-      {initial?.code === undefined && field('Código', 'code', 'text', { placeholder: 'ej: ST021', required: true })}
+      <div>
+        <label htmlFor="product-code" className="block text-sm font-medium text-gray-700 mb-1">Código</label>
+        <input
+          id="product-code"
+          type="text"
+          value={form.code ?? ''}
+          onChange={(e) => {
+            // Mayúsculas y solo letras, números, punto, guion y guion bajo.
+            const clean = e.target.value.toUpperCase().replace(/[^A-Z0-9._-]/g, '');
+            setForm((p) => ({ ...p, code: clean }));
+          }}
+          placeholder="ej: ST021"
+          required
+          minLength={2}
+          maxLength={20}
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+        />
+        {initial?.code !== undefined && (
+          <p className="text-xs text-gray-400 mt-1">
+            Código interno del producto. Puedes cambiarlo: los pedidos y los combos no se ven afectados.
+          </p>
+        )}
+      </div>
       {field('Nombre', 'name', 'text', { required: true, id: 'product-name', maxLength: 120 })}
 
       <div>
