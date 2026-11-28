@@ -101,7 +101,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel = 'Crear pr
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
       {initial?.code === undefined && field('Código', 'code', 'text', { placeholder: 'ej: ST021', required: true })}
-      {field('Nombre', 'name', 'text', { required: true })}
+      {field('Nombre', 'name', 'text', { required: true, id: 'product-name', maxLength: 120 })}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Frase corta</label>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeftIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, ExclamationCircleIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { adminApi } from '@/lib/adminApi';
 import type { AdminProduct } from '@/lib/adminApi';
 import { categoryLabel } from '@/lib/format';
@@ -43,6 +43,16 @@ export default function EditProductPage() {
     notify('Producto guardado');
   };
 
+  // Lleva al campo "Nombre" (pestaña de información) y lo deja listo para escribir.
+  const editName = () => {
+    setTab('info');
+    setTimeout(() => {
+      const input = document.getElementById('product-name') as HTMLInputElement | null;
+      input?.focus();
+      input?.select();
+    }, 50);
+  };
+
   if (loading || !product) {
     return <div className="p-8 text-gray-400 animate-pulse">Cargando producto...</div>;
   }
@@ -70,7 +80,18 @@ export default function EditProductPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">{product.name}</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-gray-800">{product.name}</h1>
+            <button
+              type="button"
+              onClick={editName}
+              title="Cambiar el nombre"
+              aria-label="Cambiar el nombre del producto"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </button>
+          </div>
           <p className="text-gray-400 text-sm">{product.code} · {categoryLabel(product.category)}</p>
         </div>
         <a
